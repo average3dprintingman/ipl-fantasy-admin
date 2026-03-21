@@ -6,93 +6,111 @@
 <title>IPL Fantasy Admin</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #e8e8e8; }
 .app { max-width: 600px; margin: 0 auto; padding: 1rem; }
-.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 0.5px solid #e0e0e0; }
-.header h1 { font-size: 18px; font-weight: 600; }
-.header span { font-size: 12px; color: #888; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 0.5px solid #2a2a2a; }
+.header h1 { font-size: 18px; font-weight: 600; color: #f0f0f0; }
+.header span { font-size: 12px; color: #555; }
 .nav { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
-.nav-btn { padding: 7px 14px; border-radius: 8px; border: 0.5px solid #d0d0d0; background: transparent; cursor: pointer; font-size: 13px; color: #666; transition: all 0.15s; }
-.nav-btn.active { background: #f0f0f0; color: #1a1a1a; border-color: #aaa; font-weight: 500; }
+.nav-btn { padding: 7px 14px; border-radius: 8px; border: 0.5px solid #2e2e2e; background: transparent; cursor: pointer; font-size: 13px; color: #666; transition: all 0.15s; }
+.nav-btn.active { background: #2a2a2a; color: #f0f0f0; border-color: #444; font-weight: 500; }
+.nav-btn:hover:not(.active) { background: #1e1e1e; color: #ccc; }
 .section { display: none; }
 .section.active { display: block; }
-.card { background: #fff; border: 0.5px solid #e8e8e8; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 12px; }
-.label { font-size: 12px; color: #888; margin-bottom: 4px; }
-.metric { font-size: 22px; font-weight: 500; color: #1a1a1a; }
+.card { background: #1a1a1a; border: 0.5px solid #2a2a2a; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 12px; }
+.label { font-size: 12px; color: #555; margin-bottom: 4px; }
+.metric { font-size: 22px; font-weight: 500; color: #f0f0f0; }
 .badge { display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 8px; font-weight: 500; }
-.badge-success { background: #e6f4ea; color: #2d7a3a; }
-.badge-warning { background: #fff8e1; color: #b45309; }
-.badge-danger { background: #fdecea; color: #c0392b; }
-.badge-info { background: #e8f0fe; color: #1a56db; }
+.badge-success { background: #0d2e18; color: #4caf72; }
+.badge-warning { background: #2e1f05; color: #e09436; }
+.badge-danger { background: #2e0d0d; color: #e05555; }
+.badge-info { background: #0d1f3e; color: #5b8dee; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
-.section-title { font-size: 12px; font-weight: 500; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
-.player-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; }
+.section-title { font-size: 12px; font-weight: 500; color: #555; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.player-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid #222; }
 .player-row:last-child { border-bottom: none; }
-.avatar { width: 32px; height: 32px; border-radius: 50%; background: #e8f0fe; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: #1a56db; flex-shrink: 0; }
-.match-item { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 0.5px solid #f0f0f0; gap: 12px; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: #1a2740; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: #5b8dee; flex-shrink: 0; }
+.match-item { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 0.5px solid #222; gap: 12px; }
 .match-item:last-child { border-bottom: none; }
-.match-teams { font-weight: 500; font-size: 14px; }
-.match-meta { font-size: 12px; color: #888; margin-top: 2px; }
-.pay-btn { padding: 5px 12px; border-radius: 8px; border: 0.5px solid #d0d0d0; background: transparent; cursor: pointer; font-size: 12px; color: #1a1a1a; transition: all 0.15s; }
-.pay-btn:hover { background: #f5f5f5; }
-.pay-btn.paid { background: #e6f4ea; color: #2d7a3a; border-color: transparent; }
-.pay-btn.debt { background: #fff8e1; color: #b45309; border-color: transparent; }
-input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 8px 10px; border: 0.5px solid #d0d0d0; border-radius: 8px; background: #fff; color: #1a1a1a; font-size: 14px; font-family: inherit; }
+.match-teams { font-weight: 500; font-size: 14px; color: #e8e8e8; }
+.match-meta { font-size: 12px; color: #555; margin-top: 2px; }
+.pay-btn { padding: 5px 12px; border-radius: 8px; border: 0.5px solid #2e2e2e; background: transparent; cursor: pointer; font-size: 12px; color: #ccc; transition: all 0.15s; }
+.pay-btn:hover { background: #242424; }
+.pay-btn.paid { background: #0d2e18; color: #4caf72; border-color: transparent; }
+.pay-btn.debt { background: #2e1f05; color: #e09436; border-color: transparent; }
+input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 8px 10px; border: 0.5px solid #2e2e2e; border-radius: 8px; background: #242424; color: #e8e8e8; font-size: 14px; font-family: inherit; }
+input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus { outline: none; border-color: #444; }
+select option { background: #242424; color: #e8e8e8; }
 textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
-.btn-primary { padding: 9px 18px; border-radius: 8px; border: none; background: #1a1a1a; color: #fff; cursor: pointer; font-size: 13px; font-weight: 500; }
-.btn-secondary { padding: 9px 18px; border-radius: 8px; border: 0.5px solid #d0d0d0; background: transparent; color: #1a1a1a; cursor: pointer; font-size: 13px; }
+.btn-primary { padding: 9px 18px; border-radius: 8px; border: none; background: #e8e8e8; color: #0f0f0f; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.15s; }
+.btn-primary:hover { background: #1a1a1a; }
+.btn-secondary { padding: 9px 18px; border-radius: 8px; border: 0.5px solid #2e2e2e; background: transparent; color: #ccc; cursor: pointer; font-size: 13px; transition: all 0.15s; }
+.btn-secondary:hover { background: #242424; }
 .btn-green { padding: 9px 18px; border-radius: 8px; border: none; background: #25D366; color: #fff; cursor: pointer; font-size: 13px; font-weight: 500; }
 .btn-sm { padding: 5px 10px; font-size: 12px; }
 .rank-badge { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; }
-.rank-1 { background: #FAC775; color: #412402; }
-.rank-2 { background: #f0f0f0; color: #666; }
-.tab-bar { display: flex; gap: 4px; background: #f0f0f0; border-radius: 8px; padding: 3px; margin-bottom: 1rem; }
+.rank-1 { background: #3d2800; color: #FAC775; }
+.rank-2 { background: #242424; color: #666; }
+.tab-bar { display: flex; gap: 4px; background: #1a1a1a; border-radius: 8px; padding: 3px; margin-bottom: 1rem; border: 0.5px solid #2a2a2a; }
 .tab { flex: 1; padding: 6px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 13px; color: #666; transition: all 0.15s; }
-.tab.active { background: #fff; color: #1a1a1a; font-weight: 500; }
+.tab.active { background: #2e2e2e; color: #f0f0f0; font-weight: 500; }
+.tab:hover:not(.active) { color: #aaa; }
 .payout-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; }
-.payout-1 { background: #FAEEDA; }
-.payout-2 { background: #f5f5f5; }
-.upload-area { border: 1.5px dashed #d0d0d0; border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.15s; }
-.upload-area:hover { background: #f5f5f5; }
+.payout-1 { background: #2a1e08; }
+.payout-2 { background: #1e1e1e; }
+.upload-area { border: 1.5px dashed #2e2e2e; border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.15s; }
+.upload-area:hover { background: #1e1e1e; border-color: #444; }
 .notification { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: none; }
-.notif-success { background: #e6f4ea; color: #2d7a3a; }
-.notif-info { background: #e8f0fe; color: #1a56db; }
-.season-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; }
+.notif-success { background: #0d2e18; color: #4caf72; }
+.notif-info { background: #0d1f3e; color: #5b8dee; }
+.season-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid #222; }
 .season-row:last-child { border-bottom: none; }
-.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #e0e0e0; border-top-color: #1a1a1a; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #333; border-top-color: #e8e8e8; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.wa-template-box { background: #f5f5f5; border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.7; color: #1a1a1a; white-space: pre-wrap; border-left: 3px solid #25D366; }
-.reminder-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; }
+.wa-template-box { background: #1a1a1a; border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.7; color: #e8e8e8; white-space: pre-wrap; border-left: 3px solid #25D366; }
+.reminder-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid #222; }
 .reminder-item:last-child { border-bottom: none; }
-.toggle { width: 36px; height: 20px; border-radius: 10px; background: #ccc; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+.toggle { width: 36px; height: 20px; border-radius: 10px; background: #333; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
 .toggle.on { background: #25D366; }
-.toggle::after { content:''; position:absolute; width:16px; height:16px; border-radius:50%; background:#fff; top:2px; left:2px; transition:left 0.2s; }
+.toggle::after { content:''; position:absolute; width:16px; height:16px; border-radius:50%; background:#1a1a1a; top:2px; left:2px; transition:left 0.2s; }
 .toggle.on::after { left:18px; }
 .img-preview { max-width: 100%; border-radius: 8px; margin-bottom: 12px; max-height: 200px; object-fit: cover; }
-.fee-chip { display: inline-flex; align-items: center; gap: 4px; background: #f0f0f0; border: 0.5px solid #d0d0d0; border-radius: 8px; padding: 3px 8px; font-size: 12px; font-weight: 500; color: #1a1a1a; cursor: pointer; transition: all 0.15s; }
-.fee-chip:hover { background: #fff; border-color: #aaa; }
-.fee-edit-panel { background: #f5f5f5; border-radius: 8px; padding: 12px; margin-top: 8px; display: none; }
+.fee-chip { display: inline-flex; align-items: center; gap: 4px; background: #242424; border: 0.5px solid #2e2e2e; border-radius: 8px; padding: 3px 8px; font-size: 12px; font-weight: 500; color: #ccc; cursor: pointer; transition: all 0.15s; }
+.fee-chip:hover { background: #2e2e2e; border-color: #444; }
+.fee-edit-panel { background: #242424; border-radius: 8px; padding: 12px; margin-top: 8px; display: none; border: 0.5px solid #2e2e2e; }
 .fee-edit-panel.open { display: block; }
 .fee-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-.fee-preset { padding: 5px 12px; border-radius: 8px; border: 0.5px solid #d0d0d0; background: transparent; cursor: pointer; font-size: 13px; color: #666; transition: all 0.15s; }
-.fee-preset:hover, .fee-preset.selected { background: #fff; color: #1a1a1a; border-color: #aaa; font-weight: 500; }
+.fee-preset { padding: 5px 12px; border-radius: 8px; border: 0.5px solid #2e2e2e; background: transparent; cursor: pointer; font-size: 13px; color: #666; transition: all 0.15s; }
+.fee-preset:hover, .fee-preset.selected { background: #2e2e2e; color: #f0f0f0; border-color: #444; font-weight: 500; }
 @media (max-width: 480px) {
   .grid4 { grid-template-columns: repeat(2, 1fr); }
   .nav-btn { font-size: 12px; padding: 6px 10px; }
 }
-
-.credit-bar-bg { height: 5px; background: #e8e8e8; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+.credit-bar-bg { height: 5px; background: #2a2a2a; border-radius: 3px; overflow: hidden; margin-top: 5px; }
 .credit-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
 .credit-bar-wrap { flex: 1; min-width: 60px; }
-.ledger-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 0.5px solid #f0f0f0; font-size: 13px; }
+.ledger-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 0.5px solid #222; font-size: 13px; }
 .ledger-row:last-child { border-bottom: none; }
-.ledger-date { font-size: 11px; color: #888; margin-top: 2px; }
-.credit-positive { color: #2d7a3a; font-weight: 500; }
-.credit-negative { color: #c0392b; font-weight: 500; }
-.preset-btn { padding: 5px 12px; border-radius: 8px; border: 0.5px solid #d0d0d0; background: transparent; cursor: pointer; font-size: 13px; color: #666; transition: all 0.15s; }
-.preset-btn:hover, .preset-btn.sel { background: #fff; color: #1a1a1a; border-color: #aaa; font-weight: 500; }
+.ledger-date { font-size: 11px; color: #555; margin-top: 2px; }
+.credit-positive { color: #4caf72; font-weight: 500; }
+.credit-negative { color: #e05555; font-weight: 500; }
+.preset-btn { padding: 5px 12px; border-radius: 8px; border: 0.5px solid #2e2e2e; background: transparent; cursor: pointer; font-size: 13px; color: #666; transition: all 0.15s; }
+.preset-btn:hover, .preset-btn.sel { background: #2e2e2e; color: #f0f0f0; border-color: #444; font-weight: 500; }
 .topup-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.result-card { background:#1a1a1a; border:0.5px solid #2a2a2a; border-radius:12px; padding:1rem 1.25rem; margin-bottom:10px; }
+.result-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.result-actions { display:flex; gap:6px; }
+.btn-icon { padding:5px 10px; border-radius:8px; border:0.5px solid #2e2e2e; background:transparent; cursor:pointer; font-size:12px; color:#666; transition:all 0.15s; }
+.btn-icon:hover { background:#242424; color:#ccc; }
+.btn-icon.danger:hover { background:#2e0d0d; color:#e05555; border-color:#5a1a1a; }
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; padding:1rem; }
+.modal-overlay.open { display:flex; }
+.modal { background:#1a1a1a; border:0.5px solid #2a2a2a; border-radius:16px; padding:1.5rem; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; }
+.modal-title { font-size:16px; font-weight:600; margin-bottom:1rem; color:#f0f0f0; }
+.modal-field { margin-bottom:12px; }
+.modal-field label { display:block; font-size:12px; color:#555; margin-bottom:4px; }
+.modal-footer { display:flex; gap:8px; margin-top:1rem; }
 </style>
 </head>
 <body>
@@ -116,21 +134,135 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 
 <!-- DASHBOARD -->
 <div id="sec-dashboard" class="section active">
-  <div class="grid4" style="margin-bottom:1rem;">
-    <div class="card" style="padding:0.85rem;"><div class="label">Today's matches</div><div class="metric">2</div></div>
-    <div class="card" style="padding:0.85rem;"><div class="label">Collected today</div><div class="metric" id="dash-collected">₹1,400</div></div>
-    <div class="card" style="padding:0.85rem;"><div class="label">Total debt</div><div class="metric">₹200</div></div>
-    <div class="card" style="padding:0.85rem;"><div class="label">Matches played</div><div class="metric">3</div></div>
+
+  <!-- Row 1: 4 key stats -->
+  <div class="grid4" style="margin-bottom:10px;">
+    <div class="card" style="padding:0.85rem;">
+      <div class="label">Matches played</div>
+      <div class="metric" id="dash-played">0</div>
+    </div>
+    <div class="card" style="padding:0.85rem;">
+      <div class="label">Season pool</div>
+      <div class="metric" id="dash-pool">₹0</div>
+    </div>
+    <div class="card" style="padding:0.85rem;">
+      <div class="label">Total debt</div>
+      <div class="metric" id="dash-debt" style="color:#e05555;">₹0</div>
+    </div>
+    <div class="card" style="padding:0.85rem;">
+      <div class="label">Active players</div>
+      <div class="metric" id="dash-players">0</div>
+    </div>
   </div>
+
+  <!-- Row 2: Season leader + Top debtor -->
+  <div class="grid2" style="margin-bottom:10px;">
+    <div class="card" style="padding:0.85rem;">
+      <div class="label" style="margin-bottom:8px;">🏆 Season leader</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="avatar" id="dash-leader-avatar" style="background:#2a1e08;color:#FAC775;">—</div>
+        <div>
+          <div style="font-weight:500;font-size:14px;" id="dash-leader-name">—</div>
+          <div style="font-size:12px;color:#666;" id="dash-leader-sub">No results yet</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:0.85rem;">
+      <div class="label" style="margin-bottom:8px;">⚠️ Top debtor</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="avatar" id="dash-debtor-avatar" style="background:#2e0d0d;color:#e05555;">—</div>
+        <div>
+          <div style="font-weight:500;font-size:14px;" id="dash-debtor-name">All clear</div>
+          <div style="font-size:12px;color:#666;" id="dash-debtor-sub">No outstanding debts</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Payment collection progress -->
+  <div class="card" style="margin-bottom:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div class="label">💰 Collection — next match</div>
+      <span class="badge" id="dash-pay-badge" style="font-size:11px;">0 / 0 paid</span>
+    </div>
+    <div id="dash-match-name" style="font-weight:500;font-size:14px;margin-bottom:8px;">—</div>
+    <div style="background:#2a2a2a;border-radius:4px;height:6px;overflow:hidden;margin-bottom:8px;">
+      <div id="dash-pay-bar" style="height:100%;border-radius:4px;background:#2d7a3a;transition:width 0.4s;width:0%;"></div>
+    </div>
+    <div id="dash-unpaid-chips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+  </div>
+
+  <!-- Row 4: Next match + Last result -->
+  <div class="grid2" style="margin-bottom:10px;">
+    <div class="card" style="padding:0.85rem;">
+      <div class="label" style="margin-bottom:8px;">📅 Next match</div>
+      <div id="dash-next-teams" style="font-weight:500;font-size:14px;">—</div>
+      <div id="dash-next-meta" style="font-size:12px;color:#666;margin-top:3px;">—</div>
+      <div id="dash-next-fee" style="margin-top:6px;"></div>
+    </div>
+    <div class="card" style="padding:0.85rem;">
+      <div class="label" style="margin-bottom:8px;">🎯 Last result</div>
+      <div id="dash-last-result-match" style="font-size:12px;color:#666;margin-bottom:6px;">No results yet</div>
+      <div id="dash-last-result-rows"></div>
+    </div>
+  </div>
+
+  <!-- Row 5: Prize split + Matches left -->
+  <div class="grid2" style="margin-bottom:10px;">
+    <div class="card" style="padding:0.85rem;">
+      <div class="label" style="margin-bottom:8px;">🎰 Next match prize split</div>
+      <div id="dash-prize-split-match" style="font-size:12px;color:#666;margin-bottom:8px;">—</div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;background:#2a1e08;border-radius:8px;padding:8px 10px;text-align:center;">
+          <div style="font-size:10px;color:#c8884a;margin-bottom:2px;">🥇 1st (70%)</div>
+          <div style="font-weight:600;font-size:15px;color:#FAC775;" id="dash-prize1">₹0</div>
+        </div>
+        <div style="flex:1;background:#242424;border-radius:8px;padding:8px 10px;text-align:center;">
+          <div style="font-size:10px;color:#666;margin-bottom:2px;">🥈 2nd (30%)</div>
+          <div style="font-weight:600;font-size:15px;color:#555;" id="dash-prize2">₹0</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:0.85rem;">
+      <div class="label" style="margin-bottom:4px;">📆 Season progress</div>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:6px;">
+        <div style="font-size:22px;font-weight:500;" id="dash-matches-left">—</div>
+        <div style="font-size:12px;color:#666;">matches left</div>
+      </div>
+      <div style="background:#2a2a2a;border-radius:4px;height:5px;overflow:hidden;margin-bottom:6px;">
+        <div id="dash-season-bar" style="height:100%;border-radius:4px;background:#1a56db;transition:width 0.4s;width:0%;"></div>
+      </div>
+      <div style="font-size:11px;color:#666;" id="dash-season-sub">— of — matches played</div>
+    </div>
+  </div>
+
+  <!-- Row 6: Win rate leaderboard -->
+  <div class="card" style="margin-bottom:10px;">
+    <div class="label" style="margin-bottom:10px;">🎖️ Win rate this season</div>
+    <div id="dash-winrate-list"></div>
+  </div>
+
+  <!-- Row 7: Credit health -->
+  <div class="card" style="margin-bottom:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="label">💳 Credit health</div>
+      <span class="badge" id="dash-credit-badge" style="font-size:11px;"></span>
+    </div>
+    <div id="dash-credit-list"></div>
+  </div>
+
+  <!-- Row 8: Season earnings bars -->
+  <div class="card" style="margin-bottom:10px;">
+    <div class="label" style="margin-bottom:10px;">📊 Season earnings</div>
+    <div id="dash-earnings-bars"></div>
+  </div>
+
+  <!-- Row 9: Upcoming matches -->
   <div class="card">
     <div class="section-title">Upcoming matches</div>
     <div id="dash-upcoming"></div>
   </div>
-  <div class="card">
-    <div class="section-title">Last result · RR vs PBKS</div>
-    <div class="payout-row payout-1"><div style="display:flex;align-items:center;gap:10px;"><div class="rank-badge rank-1">1</div><div style="font-weight:500;">Arjun</div></div><div style="font-weight:500;color:#412402;">+₹560</div></div>
-    <div class="payout-row payout-2"><div style="display:flex;align-items:center;gap:10px;"><div class="rank-badge rank-2">2</div><div style="font-weight:500;">Priya</div></div><div style="font-weight:500;color:#666;">+₹240</div></div>
-  </div>
+
 </div>
 
 <!-- MATCHES -->
@@ -141,11 +273,7 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
     <button class="tab" onclick="switchTab('all',this,'match')">All IPL</button>
   </div>
   <div id="match-upcoming"><div class="card"><div id="upcoming-list"></div></div></div>
-  <div id="match-past" style="display:none;"><div class="card">
-    <div class="match-item"><div><div class="match-teams">RR vs PBKS</div><div class="match-meta">Mar 20 · 7:30 PM · Entry ₹100</div></div><span class="badge badge-success">Done</span></div>
-    <div class="match-item"><div><div class="match-teams">GT vs LSG</div><div class="match-meta">Mar 19 · 3:30 PM · Entry ₹100</div></div><span class="badge badge-success">Done</span></div>
-    <div class="match-item"><div><div class="match-teams">MI vs DC</div><div class="match-meta">Mar 18 · 7:30 PM · Entry ₹100</div></div><span class="badge badge-success">Done</span></div>
-  </div></div>
+  <div id="match-past" style="display:none;"><div class="card"><div id="past-matches-list"><div style="text-align:center;padding:2rem;font-size:13px;color:#666;">No past matches yet. Confirm results to see them here.</div></div></div></div>
   <div id="match-all" style="display:none;"><div class="card"><div class="section-title">IPL 2026 — full schedule</div><div id="all-matches-list"></div></div></div>
 </div>
 
@@ -158,54 +286,189 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
       <span class="badge badge-warning" id="paid-count-badge">6 / 8 paid</span>
     </div>
     <div id="payment-list"></div>
-    <div style="margin-top:12px;padding-top:12px;border-top:0.5px solid #f0f0f0;font-size:12px;color:#888;">Tap to toggle: Unpaid → Paid → Debt</div>
+    <div style="margin-top:12px;padding-top:12px;border-top:0.5px solid #222;font-size:12px;color:#666;">Tap to toggle: Unpaid → Paid → Debt</div>
   </div>
   <div class="card"><div class="section-title">Outstanding debts</div>
-    <div class="player-row">
-      <div style="display:flex;align-items:center;gap:10px;"><div class="avatar">RS</div><div><div style="font-size:14px;font-weight:500;">Rohit S</div><div style="font-size:12px;color:#888;">2 matches unpaid</div></div></div>
-      <div style="font-weight:500;color:#b45309;">₹200</div>
-    </div>
+    <div id="debts-list"><div style="text-align:center;padding:1rem;font-size:13px;color:#666;">No outstanding debts 🎉</div></div>
   </div>
 </div>
 
 <!-- RESULTS -->
 <div id="sec-results" class="section">
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchResultTab('new',this)">New Result</button>
+    <button class="tab" onclick="switchResultTab('past',this)">Past Results</button>
+  </div>
+  <div id="result-tab-new">
   <div class="notification notif-info" id="ai-notif"></div>
-  <div class="card" style="margin-bottom:12px;">
-    <div class="section-title">Select match</div>
-    <select id="result-match-select" style="margin-bottom:12px;" onchange="updateResultFeeHint()">
-      <option value="0">MI vs CSK — Today 7:30 PM</option>
-      <option value="1">RCB vs KKR — Mar 23 3:30 PM</option>
-      <option value="2">DC vs SRH — Mar 23 7:30 PM</option>
-    </select>
-    <div id="result-fee-hint" style="font-size:12px;color:#888;margin-bottom:12px;"></div>
-    <div class="section-title">Upload Dream11 screenshot</div>
-    <div class="upload-area" onclick="document.getElementById('file-input').click()">
-      <div style="font-size:28px;margin-bottom:8px;">📸</div>
-      <div style="font-weight:500;margin-bottom:4px;">Tap to upload screenshot</div>
-      <div style="font-size:12px;color:#888;">Dream11 contest leaderboard after match ends</div>
-    </div>
-    <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleScreenshot(this)">
+
+  <!-- Entry mode toggle -->
+  <div class="tab-bar" style="margin-bottom:1rem;">
+    <button class="tab active" id="mode-ai-btn" onclick="switchEntryMode('ai',this)">📸 AI Screenshot</button>
+    <button class="tab" id="mode-manual-btn" onclick="switchEntryMode('manual',this)">✏️ Manual Entry</button>
   </div>
-  <div class="card" id="ai-loading-card" style="display:none;text-align:center;padding:2rem;">
-    <div class="spinner"></div><span style="font-size:14px;color:#888;">Reading leaderboard with Claude AI...</span>
-  </div>
-  <div class="card" id="result-preview" style="display:none;">
-    <div class="section-title">Calculated payouts</div>
-    <img id="uploaded-img" class="img-preview" src="" alt="Screenshot">
-    <div style="background:#f5f5f5;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#888;" id="pool-summary"></div>
-    <div id="payout-list"></div>
-    <div style="margin-top:14px;"><div style="font-weight:500;font-size:13px;margin-bottom:8px;">WhatsApp message preview</div>
-    <div class="wa-template-box" id="wa-result-msg"></div></div>
-    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-      <button class="btn-primary" onclick="confirmResults()">Confirm & save</button>
-      <button class="btn-secondary" onclick="copyResultMsg()">Copy message</button>
-      <button class="btn-green" onclick="openWhatsApp()">Open in WhatsApp</button>
+
+  <!-- AI Screenshot mode -->
+  <div id="entry-mode-ai">
+    <div class="card" style="margin-bottom:12px;">
+      <div class="section-title">Select match</div>
+      <select id="result-match-select" style="margin-bottom:12px;" onchange="updateResultFeeHint()">
+        <option value="0">MI vs CSK — Today 7:30 PM</option>
+        <option value="1">RCB vs KKR — Mar 23 3:30 PM</option>
+        <option value="2">DC vs SRH — Mar 23 7:30 PM</option>
+      </select>
+      <div id="result-fee-hint" style="font-size:12px;color:#666;margin-bottom:12px;"></div>
+      <div class="section-title">Upload Dream11 screenshot</div>
+      <div class="upload-area" onclick="document.getElementById('file-input').click()">
+        <div style="font-size:28px;margin-bottom:8px;">📸</div>
+        <div style="font-weight:500;margin-bottom:4px;">Tap to upload screenshot</div>
+        <div style="font-size:12px;color:#666;">Dream11 contest leaderboard after match ends</div>
+      </div>
+      <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleScreenshot(this)">
     </div>
+    <div class="card" id="ai-loading-card" style="display:none;text-align:center;padding:2rem;">
+      <div class="spinner"></div><span style="font-size:14px;color:#666;">Reading leaderboard with Claude AI...</span>
+    </div>
+    <div class="card" id="result-preview" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="section-title" style="margin:0;">Calculated payouts</div>
+        <button class="btn-icon" onclick="togglePayoutEdit('ai')">✎ Edit payouts</button>
+      </div>
+      <img id="uploaded-img" class="img-preview" src="" alt="Screenshot">
+      <div style="background:#242424;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#666;" id="pool-summary"></div>
+      <div id="payout-list"></div>
+      <!-- Inline payout edit panel -->
+      <div id="ai-payout-edit" style="display:none;background:#242424;border-radius:10px;padding:14px;margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:500;color:#666;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;">Edit payouts</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div><div class="label">🥇 1st prize (₹)</div><input type="number" id="ai-edit-prize1" min="0"></div>
+          <div><div class="label">🥈 2nd prize (₹)</div><input type="number" id="ai-edit-prize2" min="0"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-primary btn-sm" onclick="applyPayoutEdit('ai')">Apply</button>
+          <button class="btn-secondary btn-sm" onclick="togglePayoutEdit('ai')">Cancel</button>
+        </div>
+      </div>
+      <div style="margin-top:14px;"><div style="font-weight:500;font-size:13px;margin-bottom:8px;">WhatsApp message preview</div>
+      <div class="wa-template-box" id="wa-result-msg"></div></div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button class="btn-primary" onclick="confirmResults()">Confirm & save</button>
+        <button class="btn-secondary" onclick="copyResultMsg()">Copy message</button>
+        <button class="btn-green" onclick="openWhatsApp()">Open in WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Entry mode -->
+  <div id="entry-mode-manual" style="display:none;">
+    <div class="card" style="margin-bottom:12px;">
+      <div class="section-title">Select match</div>
+      <select id="manual-match-select" style="margin-bottom:12px;" onchange="updateManualFeeHint()">
+        <option value="0">MI vs CSK — Today 7:30 PM</option>
+        <option value="1">RCB vs KKR — Mar 23 3:30 PM</option>
+        <option value="2">DC vs SRH — Mar 23 7:30 PM</option>
+      </select>
+      <div id="manual-fee-hint" style="font-size:12px;color:#666;margin-bottom:4px;"></div>
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+      <div class="section-title">🥇 1st Place</div>
+      <div style="margin-bottom:10px;">
+        <div class="label">Player</div>
+        <select id="manual-rank1-player" onchange="updateManualPrizes()"></select>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div class="label">Points</div>
+        <input type="number" id="manual-rank1-pts" placeholder="e.g. 245" min="0">
+      </div>
+      <div class="section-title" style="margin-top:14px;">🥈 2nd Place</div>
+      <div style="margin-bottom:10px;">
+        <div class="label">Player</div>
+        <select id="manual-rank2-player" onchange="updateManualPrizes()"></select>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div class="label">Points</div>
+        <input type="number" id="manual-rank2-pts" placeholder="e.g. 198" min="0">
+      </div>
+    </div>
+    <div class="card" id="manual-preview-card" style="display:none;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="section-title" style="margin:0;">Calculated payouts</div>
+        <button class="btn-icon" onclick="togglePayoutEdit('manual')">✎ Edit payouts</button>
+      </div>
+      <div style="background:#242424;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#666;" id="manual-pool-summary"></div>
+      <div id="manual-payout-list"></div>
+      <!-- Inline payout edit panel -->
+      <div id="manual-payout-edit" style="display:none;background:#242424;border-radius:10px;padding:14px;margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:500;color:#666;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;">Edit payouts</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div><div class="label">🥇 1st prize (₹)</div><input type="number" id="manual-edit-prize1" min="0"></div>
+          <div><div class="label">🥈 2nd prize (₹)</div><input type="number" id="manual-edit-prize2" min="0"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-primary btn-sm" onclick="applyPayoutEdit('manual')">Apply</button>
+          <button class="btn-secondary btn-sm" onclick="togglePayoutEdit('manual')">Cancel</button>
+        </div>
+      </div>
+      <div style="margin-top:14px;"><div style="font-weight:500;font-size:13px;margin-bottom:8px;">WhatsApp message preview</div>
+      <div class="wa-template-box" id="manual-wa-msg"></div></div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button class="btn-primary" onclick="confirmManualResults()">Confirm & save</button>
+        <button class="btn-secondary" onclick="copyManualMsg()">Copy message</button>
+        <button class="btn-green" onclick="openManualWhatsApp()">Open in WhatsApp</button>
+      </div>
+    </div>
+    <button class="btn-primary" style="width:100%;" onclick="previewManualResults()">Preview payouts</button>
+  </div>
+
+  </div><!-- end result-tab-new -->
+
+  <div id="result-tab-past" style="display:none;">
+    <div id="past-results-list"></div>
+    <div id="no-past-results" style="text-align:center;padding:2rem;font-size:13px;color:#666;">No results saved yet. Confirm a result to see it here.</div>
   </div>
 </div>
 
-<!-- WHATSAPP -->
+<!-- Edit Result Modal -->
+<div class="modal-overlay" id="edit-result-modal" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal">
+    <div class="modal-title">✏️ Edit Result</div>
+    <input type="hidden" id="edit-result-idx">
+    <div class="modal-field">
+      <label>Match</label>
+      <input type="text" id="edit-match-name" readonly style="background:#242424;color:#555;">
+    </div>
+    <div style="font-size:12px;font-weight:500;color:#666;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">🥇 1st Place</div>
+    <div class="modal-field">
+      <label>Player name</label>
+      <input type="text" id="edit-rank1-name">
+    </div>
+    <div class="modal-field">
+      <label>Points</label>
+      <input type="number" id="edit-rank1-pts">
+    </div>
+    <div class="modal-field">
+      <label>Prize (₹)</label>
+      <input type="number" id="edit-prize1">
+    </div>
+    <div style="font-size:12px;font-weight:500;color:#666;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">🥈 2nd Place</div>
+    <div class="modal-field">
+      <label>Player name</label>
+      <input type="text" id="edit-rank2-name">
+    </div>
+    <div class="modal-field">
+      <label>Points</label>
+      <input type="number" id="edit-rank2-pts">
+    </div>
+    <div class="modal-field">
+      <label>Prize (₹)</label>
+      <input type="number" id="edit-prize2">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="saveEditedResult()">Save changes</button>
+      <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
 <div id="sec-whatsapp" class="section">
   <div class="tab-bar">
     <button class="tab active" onclick="switchTab('wa-reminders',this,'wa')">Reminders</button>
@@ -215,9 +478,9 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
   <div id="wa-tab-wa-reminders">
     <div class="card">
       <div class="section-title">Automated reminders · MI vs CSK today</div>
-      <div class="reminder-item"><div><div style="font-size:14px;font-weight:500;">Morning reminder</div><div style="font-size:12px;color:#888;">Sent at 10:00 AM on match day</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-success" id="r1-status">Sent</span><div class="toggle on" id="t1" onclick="toggleReminder('t1','r1-status')"></div></div></div>
-      <div class="reminder-item"><div><div style="font-size:14px;font-weight:500;">2 hours before</div><div style="font-size:12px;color:#888;">Sent at 5:30 PM · deadline reminder</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-warning" id="r2-status">Pending</span><div class="toggle on" id="t2" onclick="toggleReminder('t2','r2-status')"></div></div></div>
-      <div class="reminder-item"><div><div style="font-size:14px;font-weight:500;">Final warning</div><div style="font-size:12px;color:#888;">30 mins before toss — unpaid only</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-info" id="r3-status">Scheduled</span><div class="toggle on" id="t3" onclick="toggleReminder('t3','r3-status')"></div></div></div>
+      <div class="reminder-item"><div><div style="font-size:14px;font-weight:500;">Morning reminder</div><div style="font-size:12px;color:#666;">Sent at 10:00 AM on match day</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-success" id="r1-status">Sent</span><div class="toggle on" id="t1" onclick="toggleReminder('t1','r1-status')"></div></div></div>
+      <div class="reminder-item"><div><div style="font-size:14px;font-weight:500;">2 hours before</div><div style="font-size:12px;color:#666;">Sent at 5:30 PM · deadline reminder</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-warning" id="r2-status">Pending</span><div class="toggle on" id="t2" onclick="toggleReminder('t2','r2-status')"></div></div></div>
+      <div class="reminder-item"><div><div style="font-size:14px;font-weight:500;">Final warning</div><div style="font-size:12px;color:#666;">30 mins before toss — unpaid only</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-info" id="r3-status">Scheduled</span><div class="toggle on" id="t3" onclick="toggleReminder('t3','r3-status')"></div></div></div>
     </div>
     <div class="card">
       <div class="section-title">Send manual message now</div>
@@ -228,7 +491,7 @@ Pick your Dream11 team before toss! 🏏</textarea></div>
         <button class="btn-green" onclick="sendManualMsg()">Send to all players</button>
         <button class="btn-secondary" onclick="previewMsg()">Preview</button>
       </div>
-      <div id="manual-preview" style="display:none;margin-top:12px;"><div style="font-size:12px;color:#888;margin-bottom:6px;">Preview</div><div class="wa-template-box" id="manual-preview-text"></div></div>
+      <div id="manual-preview" style="display:none;margin-top:12px;"><div style="font-size:12px;color:#666;margin-bottom:6px;">Preview</div><div class="wa-template-box" id="manual-preview-text"></div></div>
     </div>
   </div>
   <div id="wa-tab-wa-templates" style="display:none;">
@@ -246,7 +509,7 @@ Pay now or you'll be marked as debt 📋</textarea></div><button class="btn-seco
 Better luck next match! 💪</textarea></div><button class="btn-secondary btn-sm" onclick="saveTpl()">Save</button></div>
   </div>
   <div id="wa-tab-wa-players" style="display:none;">
-    <div class="card"><div class="section-title">Player WhatsApp numbers</div><div id="wa-player-list"></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid #f0f0f0;font-size:12px;color:#888;">Numbers used to generate WhatsApp links.</div></div>
+    <div class="card"><div class="section-title">Player WhatsApp numbers</div><div id="wa-player-list"></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid #222;font-size:12px;color:#666;">Numbers used to generate WhatsApp links.</div></div>
   </div>
 </div>
 
@@ -257,7 +520,7 @@ Better luck next match! 💪</textarea></div><button class="btn-secondary btn-sm
       <div class="section-title" style="margin:0;">Player roster</div>
       <button class="btn-secondary btn-sm" onclick="toggleAddPlayer()">+ Add player</button>
     </div>
-    <div id="add-player-form" style="display:none;margin-bottom:14px;padding:12px;background:#f5f5f5;border-radius:8px;">
+    <div id="add-player-form" style="display:none;margin-bottom:14px;padding:12px;background:#242424;border-radius:8px;">
       <div style="margin-bottom:8px;"><input type="text" id="new-name" placeholder="Player name"></div>
       <div style="margin-bottom:8px;"><input type="text" id="new-dream11" placeholder="Dream11 username"></div>
       <div style="margin-bottom:8px;"><input type="text" id="new-phone" placeholder="WhatsApp number (91XXXXXXXXXX)"></div>
@@ -270,8 +533,8 @@ Better luck next match! 💪</textarea></div><button class="btn-secondary btn-sm
 <!-- SEASON -->
 <div id="sec-season" class="section">
   <div class="grid2" style="margin-bottom:1rem;">
-    <div class="card" style="padding:0.85rem;"><div class="label">Total pool</div><div class="metric">₹2,400</div></div>
-    <div class="card" style="padding:0.85rem;"><div class="label">Matches done</div><div class="metric">3</div></div>
+    <div class="card" style="padding:0.85rem;"><div class="label">Total pool</div><div class="metric" id="season-total-pool">₹0</div></div>
+    <div class="card" style="padding:0.85rem;"><div class="label">Matches done</div><div class="metric" id="season-matches-done">0</div></div>
   </div>
   <div class="card"><div class="section-title">Season leaderboard</div><div id="season-list"></div></div>
 </div>
@@ -280,20 +543,12 @@ Better luck next match! 💪</textarea></div><button class="btn-secondary btn-sm
 const PRIZE_SPLIT = [0.70, 0.30];
 const FEE_PRESETS = [50, 100, 200, 500];
 
-let players = [
-  { id:1, name:'Arjun', dream11:'arjun_d11', initials:'AR', phone:'919876543210' },
-  { id:2, name:'Priya', dream11:'priya_d11', initials:'PR', phone:'919876543211' },
-  { id:3, name:'Rahul', dream11:'rahul_d11', initials:'RA', phone:'919876543212' },
-  { id:4, name:'Sneha', dream11:'sneha_d11', initials:'SN', phone:'919876543213' },
-  { id:5, name:'Karan', dream11:'karan_d11', initials:'KA', phone:'919876543214' },
-  { id:6, name:'Divya', dream11:'divya_d11', initials:'DI', phone:'919876543215' },
-  { id:7, name:'Rohit S', dream11:'rohit_d11', initials:'RS', phone:'919876543216' },
-  { id:8, name:'Meera', dream11:'meera_d11', initials:'ME', phone:'919876543217' },
-];
+let players = [];
 
-let matchPayments = { 0:{ 1:true,2:true,3:true,4:true,5:true,6:true,7:false,8:false } };
+let matchPayments = {};
 let aiResults = null;
 let activeMatchIdx = 0;
+let savedResults = [];
 
 let iplSchedule = [
   { date:'Mar 28', teams:'RCB vs SRH', time:'7:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
@@ -318,16 +573,7 @@ let iplSchedule = [
   { date:'Apr 12', teams:'MI vs RCB', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
 ];
 
-let seasonStats = [
-  { id:1, name:'Arjun', initials:'AR', wins:2, earned:1120, paid:300 },
-  { id:2, name:'Priya', initials:'PR', wins:1, earned:240, paid:300 },
-  { id:3, name:'Rahul', initials:'RA', wins:0, earned:0, paid:300 },
-  { id:4, name:'Sneha', initials:'SN', wins:0, earned:0, paid:300 },
-  { id:5, name:'Karan', initials:'KA', wins:0, earned:0, paid:300 },
-  { id:6, name:'Divya', initials:'DI', wins:0, earned:0, paid:300 },
-  { id:7, name:'Rohit S', initials:'RS', wins:0, earned:0, paid:100 },
-  { id:8, name:'Meera', initials:'ME', wins:0, earned:0, paid:300 },
-];
+let seasonStats = [];
 
 function feeChipHTML(idx) {
   return `<span class="fee-chip" onclick="toggleFeePanel(${idx})">₹${iplSchedule[idx].fee} <span style="font-size:10px;opacity:0.6;">✎</span></span>`;
@@ -336,7 +582,7 @@ function feeChipHTML(idx) {
 function feePanelHTML(idx) {
   const m = iplSchedule[idx];
   return `<div class="fee-edit-panel" id="fee-panel-${idx}">
-    <div style="font-size:12px;color:#888;margin-bottom:8px;">Set entry fee for this match</div>
+    <div style="font-size:12px;color:#666;margin-bottom:8px;">Set entry fee for this match</div>
     <div class="fee-presets" id="fee-presets-${idx}">
       ${FEE_PRESETS.map(f=>`<button class="fee-preset ${m.fee===f?'selected':''}" onclick="selectFeePreset(${idx},${f})">₹${f}</button>`).join('')}
     </div>
@@ -369,15 +615,199 @@ function saveFee(idx) {
   if(p) p.classList.remove('open');
 }
 
-function renderDashUpcoming() {
-  document.getElementById('dash-upcoming').innerHTML = iplSchedule.slice(0,3).map((m,i) => `
+function renderPastMatches() {
+  const el = document.getElementById('past-matches-list');
+  if(savedResults.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem;font-size:13px;color:#666;">No past matches yet. Confirm results to see them here.</div>';
+    return;
+  }
+  el.innerHTML = savedResults.map(r => `
     <div class="match-item">
+      <div>
+        <div class="match-teams">${r.matchName}</div>
+        <div class="match-meta">${r.date} · 🥇 ${r.rank1.name} +₹${r.rank1.prize} · 🥈 ${r.rank2.name} +₹${r.rank2.prize}</div>
+      </div>
+      <span class="badge badge-success">Done</span>
+    </div>`).join('');
+}
+
+function renderDashboard() {
+  const totalMatches = iplSchedule.length;
+  const played = savedResults.length;
+  const remaining = totalMatches - played;
+  const nextMatch = iplSchedule[0];
+  const pool = players.length * nextMatch.fee;
+  const prize1 = Math.round(pool * PRIZE_SPLIT[0]);
+  const prize2 = Math.round(pool * PRIZE_SPLIT[1]);
+
+  // Row 1: key stats
+  document.getElementById('dash-played').textContent = played;
+  const seasonPool = savedResults.reduce((s,r)=>s+r.pool,0);
+  document.getElementById('dash-pool').textContent = '₹' + seasonPool;
+  initLedger();
+  const totalDebt = players.reduce((s,p)=>{ const b=ledger[p.id]?.balance||0; return s+(b<0?Math.abs(b):0); },0);
+  document.getElementById('dash-debt').textContent = '₹' + totalDebt;
+  document.getElementById('dash-players').textContent = players.length;
+
+  // Row 2: season leader
+  const sorted = [...seasonStats].sort((a,b)=>b.earned-a.earned);
+  const leader = sorted[0];
+  if(leader && leader.earned > 0) {
+    document.getElementById('dash-leader-avatar').textContent = leader.initials;
+    document.getElementById('dash-leader-name').textContent = leader.name;
+    document.getElementById('dash-leader-sub').textContent = leader.wins + ' win' + (leader.wins!==1?'s':'') + ' · +₹' + leader.earned;
+  }
+  // top debtor
+  const debtors = players.map(p=>({...p, bal: ledger[p.id]?.balance||0})).filter(p=>p.bal<0).sort((a,b)=>a.bal-b.bal);
+  if(debtors.length > 0) {
+    const d = debtors[0];
+    document.getElementById('dash-debtor-avatar').textContent = d.initials;
+    document.getElementById('dash-debtor-name').textContent = d.name;
+    document.getElementById('dash-debtor-sub').textContent = '₹' + Math.abs(d.bal) + ' in debt';
+  } else {
+    document.getElementById('dash-debtor-avatar').textContent = '✓';
+    document.getElementById('dash-debtor-name').textContent = 'All clear';
+    document.getElementById('dash-debtor-sub').textContent = 'No outstanding debts';
+  }
+
+  // Row 3: payment collection
+  const payments = matchPayments[activeMatchIdx] || {};
+  const paidCount = Object.values(payments).filter(v=>v===true).length;
+  const pct = players.length ? Math.round(paidCount/players.length*100) : 0;
+  document.getElementById('dash-match-name').textContent = nextMatch.teams + ' · ' + nextMatch.date;
+  document.getElementById('dash-pay-badge').textContent = paidCount + ' / ' + players.length + ' paid';
+  const badgeColor = pct===100?'badge-success':pct>=50?'badge-warning':'badge-danger';
+  document.getElementById('dash-pay-badge').className = 'badge ' + badgeColor;
+  document.getElementById('dash-pay-bar').style.width = pct + '%';
+  document.getElementById('dash-pay-bar').style.background = pct===100?'#2d7a3a':pct>=50?'#b45309':'#c0392b';
+  const unpaid = players.filter(p=>!payments[p.id]||payments[p.id]==='debt');
+  document.getElementById('dash-unpaid-chips').innerHTML = unpaid.length===0
+    ? '<span style="font-size:12px;color:#4caf72;">✓ All collected</span>'
+    : unpaid.map(p=>`<span style="background:#2e0d0d;color:#e05555;border-radius:6px;padding:3px 8px;font-size:12px;">${p.name}</span>`).join('');
+
+  // Row 4: next match + last result
+  document.getElementById('dash-next-teams').textContent = nextMatch.teams;
+  document.getElementById('dash-next-meta').textContent = nextMatch.date + ' · ' + nextMatch.time + ' · ' + nextMatch.venue;
+  document.getElementById('dash-next-fee').innerHTML = `<span class="badge badge-info" style="font-size:11px;">Entry ₹${nextMatch.fee} · Pool ₹${pool}</span>`;
+  if(savedResults.length > 0) {
+    const lr = savedResults[0];
+    document.getElementById('dash-last-result-match').textContent = lr.matchName + ' · ' + lr.date;
+    document.getElementById('dash-last-result-rows').innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="rank-badge rank-1" style="width:18px;height:18px;font-size:9px;">1</div>
+          <span style="font-size:13px;font-weight:500;">${lr.rank1.name}</span>
+        </div>
+        <span style="font-size:12px;font-weight:500;color:#FAC775;">+₹${lr.rank1.prize}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="rank-badge rank-2" style="width:18px;height:18px;font-size:9px;">2</div>
+          <span style="font-size:13px;">${lr.rank2.name}</span>
+        </div>
+        <span style="font-size:12px;color:#666;">+₹${lr.rank2.prize}</span>
+      </div>`;
+  } else {
+    document.getElementById('dash-last-result-match').textContent = 'No results yet';
+    document.getElementById('dash-last-result-rows').innerHTML = '';
+  }
+
+  // Row 5: prize split + season progress
+  document.getElementById('dash-prize-split-match').textContent = nextMatch.teams + ' · ' + nextMatch.date;
+  document.getElementById('dash-prize1').textContent = '₹' + prize1;
+  document.getElementById('dash-prize2').textContent = '₹' + prize2;
+  document.getElementById('dash-matches-left').textContent = remaining;
+  const playedPct = totalMatches ? Math.round(played/totalMatches*100) : 0;
+  document.getElementById('dash-season-bar').style.width = playedPct + '%';
+  document.getElementById('dash-season-sub').textContent = played + ' of ' + totalMatches + ' matches played';
+
+  // Row 6: win rate
+  const winRateData = [...seasonStats]
+    .map(p => ({ ...p, rate: played > 0 ? Math.round(p.wins/played*100) : 0 }))
+    .sort((a,b) => b.wins - a.wins || b.earned - a.earned);
+  document.getElementById('dash-winrate-list').innerHTML = winRateData.length === 0
+    ? '<div style="text-align:center;padding:1.5rem;font-size:13px;color:#666;">Add players to see win rates.</div>'
+    : winRateData.map((p,i) => {
+      const bar = p.wins > 0 ? Math.round(p.wins / Math.max(...winRateData.map(x=>x.wins),1) * 100) : 0;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid #222;${i===winRateData.length-1?'border:none':''}">
+        <div class="avatar" style="width:26px;height:26px;font-size:10px;">${p.initials}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;">${p.name}</div>
+          <div style="background:#2a2a2a;border-radius:3px;height:4px;margin-top:4px;overflow:hidden;">
+            <div style="width:${bar}%;height:100%;background:${i===0?'#FAC775':'#444'};border-radius:3px;"></div>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:13px;font-weight:500;">${p.wins}W</div>
+          <div style="font-size:11px;color:#666;">${p.rate}%</div>
+        </div>
+      </div>`;
+    }).join('');
+
+  // Row 7: credit health
+  const creditSorted = [...players].map(p=>({...p, bal: ledger[p.id]?.balance||0})).sort((a,b)=>b.bal-a.bal);
+  const inDebt2 = creditSorted.filter(p=>p.bal<0).length;
+  document.getElementById('dash-credit-badge').textContent = inDebt2 > 0 ? inDebt2 + ' in debt' : 'All good';
+  document.getElementById('dash-credit-badge').className = 'badge ' + (inDebt2>0?'badge-warning':'badge-success');
+  document.getElementById('dash-credit-list').innerHTML = creditSorted.length === 0
+    ? '<div style="text-align:center;padding:1.5rem;font-size:13px;color:#666;">No players added yet.</div>'
+    : creditSorted.map(p => {
+      const maxAbs = Math.max(...creditSorted.map(x=>Math.abs(x.bal)), 1);
+      const pct2 = Math.min(100, Math.round(Math.abs(p.bal)/maxAbs*100));
+      const col = p.bal>0?'#4caf72':p.bal<0?'#e05555':'#555';
+      const bg  = p.bal>0?'#4caf72':p.bal<0?'#e05555':'#333';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid #222;">
+        <div class="avatar" style="width:26px;height:26px;font-size:10px;">${p.initials}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;">${p.name}</div>
+          <div style="background:#2a2a2a;border-radius:3px;height:4px;margin-top:4px;overflow:hidden;">
+            <div style="width:${pct2}%;height:100%;background:${bg};border-radius:3px;"></div>
+          </div>
+        </div>
+        <div style="font-size:13px;font-weight:500;color:${col};">${p.bal>=0?'+':'−'}₹${Math.abs(p.bal)}</div>
+      </div>`;
+    }).join('');
+
+  // Row 8: earnings bars
+  const earnSorted = [...seasonStats].sort((a,b)=>b.earned-a.earned);
+  document.getElementById('dash-earnings-bars').innerHTML = earnSorted.length === 0
+    ? '<div style="text-align:center;padding:1.5rem;font-size:13px;color:#666;">No earnings yet. Confirm results to see standings.</div>'
+    : earnSorted.map((p,i) => {
+      const maxEarn = Math.max(...earnSorted.map(x=>x.earned), 1);
+      const bPct = Math.round(p.earned/maxEarn*100);
+      const net = p.earned - p.paid;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid #222;${i===earnSorted.length-1?'border:none':''}">
+        <div class="avatar" style="width:26px;height:26px;font-size:10px;">${p.initials}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;">${p.name}</div>
+          <div style="background:#2a2a2a;border-radius:3px;height:4px;margin-top:4px;overflow:hidden;">
+            <div style="width:${bPct}%;height:100%;background:${i===0?'#FAC775':'#1a56db'};border-radius:3px;"></div>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:13px;font-weight:500;color:${p.earned>0?'#4caf72':'#666'};">+₹${p.earned}</div>
+          <div style="font-size:11px;color:${net>=0?'#4caf72':'#e05555'};">net ${net>=0?'+':''}₹${net}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+  // Row 9: upcoming matches
+  renderDashUpcoming();
+}
+
+function renderDashUpcoming() {
+  document.getElementById('dash-upcoming').innerHTML = iplSchedule.slice(0,3).map((m,i) => {
+    const payments = matchPayments[i] || {};
+    const paidCount = players.length ? Object.values(payments).filter(v=>v===true).length : 0;
+    const badgeText = i===0 ? `${paidCount}/${players.length} paid` : 'Upcoming';
+    return `<div class="match-item">
       <div><div class="match-teams">${m.teams}</div><div class="match-meta">${m.date} · ${m.time} · Entry ₹${m.fee}</div></div>
       <div style="display:flex;gap:8px;align-items:center;">
-        <span class="badge ${i===0?'badge-warning':'badge-info'}">${i===0?'6 paid':'Upcoming'}</span>
+        <span class="badge ${i===0?'badge-warning':'badge-info'}">${badgeText}</span>
         ${i===0?'<button class="btn-secondary btn-sm" onclick="showSection(\'payments\',null)">Manage</button>':''}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderMatches() {
@@ -404,15 +834,34 @@ function renderPayments() {
   document.getElementById('pay-match-title').textContent = m.teams;
   document.getElementById('pay-match-meta').textContent = `${m.date} · ${m.time} · Entry: ₹${m.fee}`;
   document.getElementById('paid-count-badge').textContent = paidCount+' / '+players.length+' paid';
-  document.getElementById('payment-list').innerHTML = players.map(p => {
-    const s = payments[p.id];
-    const cls = s===true?'paid':s==='debt'?'debt':'';
-    const lbl = s===true?'✓ Paid':s==='debt'?'⚠ Debt':'Unpaid';
-    return `<div class="player-row">
-      <div style="display:flex;align-items:center;gap:10px;"><div class="avatar">${p.initials}</div><div style="font-size:14px;font-weight:500;">${p.name}</div></div>
-      <button class="pay-btn ${cls}" onclick="togglePayment(${activeMatchIdx},${p.id})">${lbl} · ₹${m.fee}</button>
-    </div>`;
-  }).join('');
+  if(players.length === 0) {
+    document.getElementById('payment-list').innerHTML = '<div style="text-align:center;padding:1.5rem;font-size:13px;color:#666;">No players added yet. Add players in the Players tab first.</div>';
+  } else {
+    document.getElementById('payment-list').innerHTML = players.map(p => {
+      const s = payments[p.id];
+      const cls = s===true?'paid':s==='debt'?'debt':'';
+      const lbl = s===true?'✓ Paid':s==='debt'?'⚠ Debt':'Unpaid';
+      return `<div class="player-row">
+        <div style="display:flex;align-items:center;gap:10px;"><div class="avatar">${p.initials}</div><div style="font-size:14px;font-weight:500;">${p.name}</div></div>
+        <button class="pay-btn ${cls}" onclick="togglePayment(${activeMatchIdx},${p.id})">${lbl} · ₹${m.fee}</button>
+      </div>`;
+    }).join('');
+  }
+  // Render debts list
+  const debtors = players.filter(p => payments[p.id] === 'debt');
+  const debtsList = document.getElementById('debts-list');
+  if(debtors.length === 0) {
+    debtsList.innerHTML = '<div style="text-align:center;padding:1rem;font-size:13px;color:#666;">No outstanding debts 🎉</div>';
+  } else {
+    debtsList.innerHTML = debtors.map(p => `
+      <div class="player-row">
+        <div style="display:flex;align-items:center;gap:10px;"><div class="avatar">${p.initials}</div>
+          <div><div style="font-size:14px;font-weight:500;">${p.name}</div>
+          <div style="font-size:12px;color:#666;">Match ${activeMatchIdx+1} unpaid</div></div>
+        </div>
+        <div style="font-weight:500;color:#e09436;">₹${m.fee}</div>
+      </div>`).join('');
+  }
 }
 
 function togglePayment(matchIdx, id) {
@@ -484,11 +933,18 @@ function showPayoutPreview(rankings, file, matchFee, matchIdx) {
   const pool = players.length * matchFee;
   const prize1 = Math.round(pool*PRIZE_SPLIT[0]);
   const prize2 = Math.round(pool*PRIZE_SPLIT[1]);
+  // Store draft so edit payout panel can update it
+  window._aiDraft = {
+    matchIdx, pool, matchFee,
+    name1: rankings[0]?.name, pts1: rankings[0]?.points, prize1,
+    name2: rankings[1]?.name, pts2: rankings[1]?.points, prize2,
+    waMsg: ''
+  };
   document.getElementById('uploaded-img').src = URL.createObjectURL(file);
   document.getElementById('pool-summary').textContent =
     `Pool: ₹${pool} (${players.length} × ₹${matchFee}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
   document.getElementById('payout-list').innerHTML = rankings.slice(0,2).map((r,i)=>`
-    <div class="payout-row ${i===0?'payout-1':'payout-2'}">
+    <div class="payout-row ${i===0?'payout-1':'payout-2'}" style="border-radius:8px;margin-bottom:${i===0?'6px':'0'};">
       <div style="display:flex;align-items:center;gap:10px;">
         <div class="rank-badge ${i===0?'rank-1':'rank-2'}">${r.rank}</div>
         <div><div style="font-weight:500;font-size:14px;">${r.name}</div>
@@ -497,18 +953,44 @@ function showPayoutPreview(rankings, file, matchFee, matchIdx) {
       <div style="font-weight:500;color:${i===0?'#412402':'#666'};">+₹${i===0?prize1:prize2}</div>
     </div>`).join('');
   const waMsg = `🏏 ${m.teams} Results!\n🥇 ${rankings[0]?.name} — ${rankings[0]?.points} pts → +₹${prize1}\n🥈 ${rankings[1]?.name} — ${rankings[1]?.points} pts → +₹${prize2}\n\nBetter luck next match! 💪`;
+  window._aiDraft.waMsg = waMsg;
   document.getElementById('wa-result-msg').textContent = waMsg;
+  document.getElementById('ai-payout-edit').style.display = 'none'; // reset edit panel
   document.getElementById('result-preview').style.display='block';
   document.getElementById('result-preview').scrollIntoView({behavior:'smooth'});
 }
 
 function confirmResults() {
-  if(aiResults && aiResults.rankings.length>=2) {
+  const d = window._aiDraft;
+  if(d) {
+    const m = iplSchedule[d.matchIdx];
+    const w = seasonStats.find(p=>p.name===d.name1);
+    const s = seasonStats.find(p=>p.name===d.name2);
+    if(w){w.wins++;w.earned+=d.prize1;}
+    if(s){s.earned+=d.prize2;}
+    savedResults.unshift({
+      matchName: m.teams, date: m.date,
+      rank1: { name:d.name1, pts:d.pts1, prize:d.prize1 },
+      rank2: { name:d.name2, pts:d.pts2, prize:d.prize2 },
+      pool: d.pool, savedAt: todayStr()
+    });
+    window._aiDraft = null;
+  } else if(aiResults && aiResults.rankings.length>=2) {
+    // fallback for old flow
     const pool = players.length * aiResults.matchFee;
+    const prize1 = Math.round(pool*PRIZE_SPLIT[0]);
+    const prize2 = Math.round(pool*PRIZE_SPLIT[1]);
+    const m = iplSchedule[aiResults.matchIdx];
     const w = seasonStats.find(p=>p.name===aiResults.rankings[0].name);
     const s = seasonStats.find(p=>p.name===aiResults.rankings[1].name);
-    if(w){w.wins++;w.earned+=Math.round(pool*0.7);}
-    if(s){s.earned+=Math.round(pool*0.3);}
+    if(w){w.wins++;w.earned+=prize1;}
+    if(s){s.earned+=prize2;}
+    savedResults.unshift({
+      matchName: m.teams, date: m.date,
+      rank1: { name:aiResults.rankings[0].name, pts:aiResults.rankings[0].points, prize:prize1 },
+      rank2: { name:aiResults.rankings[1].name, pts:aiResults.rankings[1].points, prize:prize2 },
+      pool, savedAt: todayStr()
+    });
   }
   document.getElementById('result-preview').style.display='none';
   const notif=document.getElementById('ai-notif');
@@ -516,6 +998,8 @@ function confirmResults() {
   notif.className='notification notif-success';
   notif.style.display='block';
   setTimeout(()=>notif.style.display='none',2500);
+  aiResults = null;
+  renderSeason();
 }
 
 function copyResultMsg() {
@@ -540,19 +1024,27 @@ function previewMsg() {
 }
 
 function renderPlayers() {
+  if(players.length === 0) {
+    document.getElementById('player-list').innerHTML = '<div style="text-align:center;padding:2rem;font-size:13px;color:#666;">No players yet. Add your first player above.</div>';
+    return;
+  }
   document.getElementById('player-list').innerHTML = players.map(p=>`
     <div class="player-row">
       <div style="display:flex;align-items:center;gap:10px;"><div class="avatar">${p.initials}</div>
-        <div><div style="font-size:14px;font-weight:500;">${p.name}</div><div style="font-size:12px;color:#888;">${p.dream11}</div></div>
+        <div><div style="font-size:14px;font-weight:500;">${p.name}</div><div style="font-size:12px;color:#666;">${p.dream11}</div></div>
       </div>
       <div style="display:flex;gap:6px;">
         <button class="pay-btn" onclick="editPlayer(${p.id})">Edit</button>
-        <button class="pay-btn" style="color:#c0392b;" onclick="removePlayer(${p.id})">Remove</button>
+        <button class="pay-btn" style="color:#e05555;" onclick="removePlayer(${p.id})">Remove</button>
       </div>
     </div>`).join('');
 }
 
 function renderWaPlayers() {
+  if(players.length === 0) {
+    document.getElementById('wa-player-list').innerHTML = '<div style="text-align:center;padding:1.5rem;font-size:13px;color:#666;">No players added yet. Add players in the Players tab.</div>';
+    return;
+  }
   document.getElementById('wa-player-list').innerHTML = players.map(p=>`
     <div class="player-row">
       <div style="display:flex;align-items:center;gap:10px;"><div class="avatar">${p.initials}</div><div style="font-size:14px;font-weight:500;">${p.name}</div></div>
@@ -561,15 +1053,24 @@ function renderWaPlayers() {
 }
 
 function renderSeason() {
+  // Update stat tiles
+  const totalPool = savedResults.reduce((s,r)=>s+r.pool, 0);
+  document.getElementById('season-total-pool').textContent = '₹' + totalPool;
+  document.getElementById('season-matches-done').textContent = savedResults.length;
+
+  if(seasonStats.length === 0) {
+    document.getElementById('season-list').innerHTML = '<div style="text-align:center;padding:2rem;font-size:13px;color:#666;">No results yet. Confirm match results to see the leaderboard.</div>';
+    return;
+  }
   const sorted = [...seasonStats].sort((a,b)=>b.earned-a.earned);
   document.getElementById('season-list').innerHTML = sorted.map((p,i)=>`
     <div class="season-row">
       <div class="rank-badge ${i===0?'rank-1':'rank-2'}">${i+1}</div>
       <div class="avatar">${p.initials}</div>
-      <div style="flex:1;"><div style="font-size:14px;font-weight:500;">${p.name}</div><div style="font-size:12px;color:#888;">${p.wins} win${p.wins!==1?'s':''} · Paid ₹${p.paid}</div></div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:500;">${p.name}</div><div style="font-size:12px;color:#666;">${p.wins} win${p.wins!==1?'s':''} · Paid ₹${p.paid}</div></div>
       <div style="text-align:right;">
-        <div style="font-weight:500;color:${p.earned>0?'#2d7a3a':'#888'};">+₹${p.earned}</div>
-        <div style="font-size:12px;color:#888;">net ${p.earned-p.paid>=0?'+':''}₹${p.earned-p.paid}</div>
+        <div style="font-weight:500;color:${p.earned>0?'#4caf72':'#666'};">+₹${p.earned}</div>
+        <div style="font-size:12px;color:#666;">net ${p.earned-p.paid>=0?'+':''}₹${p.earned-p.paid}</div>
       </div>
     </div>`).join('');
 }
@@ -585,14 +1086,21 @@ function addPlayer() {
   const phone=document.getElementById('new-phone').value.trim();
   if(!name) return;
   const initials=name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  players.push({id:Date.now(),name,dream11:d11||name.toLowerCase()+'_d11',initials,phone:phone||''});
+  const id = Date.now();
+  players.push({id,name,dream11:d11||name.toLowerCase()+'_d11',initials,phone:phone||''});
+  seasonStats.push({id,name,initials,wins:0,earned:0,paid:0});
+  initLedger();
   document.getElementById('new-name').value='';
   document.getElementById('new-dream11').value='';
   document.getElementById('new-phone').value='';
   toggleAddPlayer(); renderPlayers();
 }
 
-function removePlayer(id){players=players.filter(p=>p.id!==id);renderPlayers();}
+function removePlayer(id){
+  players=players.filter(p=>p.id!==id);
+  seasonStats=seasonStats.filter(p=>p.id!==id);
+  renderPlayers();
+}
 
 function editPlayer(id) {
   const p=players.find(x=>x.id===id);
@@ -619,18 +1127,20 @@ function showSection(id,btn) {
   document.getElementById('sec-'+id).classList.add('active');
   if(btn) btn.classList.add('active');
   else document.querySelectorAll('.nav-btn').forEach(b=>{if((b.getAttribute('onclick')||'').includes("'"+id+"'"))b.classList.add('active');});
+  if(id==='dashboard') renderDashboard();
   if(id==='players') renderPlayers();
   if(id==='matches') renderMatches();
   if(id==='payments') renderPayments();
   if(id==='season') renderSeason();
   if(id==='whatsapp') renderWaPlayers();
   if(id==='ledger') refreshLedger();
-  if(id==='results') updateResultFeeHint();
+  if(id==='results') { updateResultFeeHint(); updateManualFeeHint(); populateManualPlayerDropdowns(); }
 }
 
 function switchTab(tab,btn,group) {
   if(group==='match'){
     ['upcoming','past','all'].forEach(t=>document.getElementById('match-'+t).style.display=t===tab?'block':'none');
+    if(tab==='past') renderPastMatches();
   } else if(group==='wa'){
     ['wa-reminders','wa-templates','wa-players'].forEach(t=>document.getElementById('wa-tab-'+t).style.display=t===tab?'block':'none');
   } else if(group==='led'){
@@ -640,14 +1150,14 @@ function switchTab(tab,btn,group) {
   btn.classList.add('active');
 }
 
-renderDashUpcoming(); renderMatches(); renderPayments(); renderPlayers(); renderSeason(); updateResultFeeHint();
-
 let ledger = {};
 let ledgerPreset = null;
 
 function initLedger() {
   players.forEach(p => { if (!ledger[p.id]) ledger[p.id] = { balance:0, transactions:[] }; });
 }
+
+renderDashboard(); renderMatches(); renderPayments(); renderPlayers(); renderSeason(); updateResultFeeHint(); updateManualFeeHint();
 
 function selectPreset(amt) {
   ledgerPreset = amt;
@@ -742,7 +1252,7 @@ function refreshLedger() {
     (ledger[p.id].transactions || []).forEach(tx => allTx.push({...tx, playerName:p.name, initials:p.initials}));
   });
   if (allTx.length === 0) {
-    document.getElementById('led-history-list').innerHTML = '<div style="font-size:13px;color:#888;padding:1rem 0;text-align:center;">No transactions yet</div>';
+    document.getElementById('led-history-list').innerHTML = '<div style="font-size:13px;color:#666;padding:1rem 0;text-align:center;">No transactions yet</div>';
   } else {
     document.getElementById('led-history-list').innerHTML = allTx.map(tx =>
       '<div class="ledger-row">' +
@@ -769,6 +1279,277 @@ function openLedgerFor(id) {
   setTimeout(() => { document.getElementById('led-player').value = id; }, 50);
 }
 
+function togglePayoutEdit(mode) {
+  const panel = document.getElementById(mode + '-payout-edit');
+  const isOpen = panel.style.display !== 'none';
+  if (!isOpen) {
+    // Pre-fill current prize values from draft
+    if (mode === 'manual' && window._manualDraft) {
+      document.getElementById('manual-edit-prize1').value = window._manualDraft.prize1;
+      document.getElementById('manual-edit-prize2').value = window._manualDraft.prize2;
+    } else if (mode === 'ai' && window._aiDraft) {
+      document.getElementById('ai-edit-prize1').value = window._aiDraft.prize1;
+      document.getElementById('ai-edit-prize2').value = window._aiDraft.prize2;
+    }
+  }
+  panel.style.display = isOpen ? 'none' : 'block';
+}
+
+function applyPayoutEdit(mode) {
+  if (mode === 'manual' && window._manualDraft) {
+    const prize1 = parseInt(document.getElementById('manual-edit-prize1').value) || 0;
+    const prize2 = parseInt(document.getElementById('manual-edit-prize2').value) || 0;
+    window._manualDraft.prize1 = prize1;
+    window._manualDraft.prize2 = prize2;
+    const d = window._manualDraft;
+    const m = iplSchedule[d.matchIdx];
+    // Re-render payout list
+    document.getElementById('manual-payout-list').innerHTML = `
+      <div class="payout-row payout-1" style="border-radius:8px;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank-badge rank-1">1</div>
+          <div><div style="font-weight:500;font-size:14px;">${d.name1}</div><div style="font-size:12px;color:#e09436;">${d.pts1} pts</div></div>
+        </div>
+        <div style="font-weight:500;color:#FAC775;">+₹${prize1}</div>
+      </div>
+      <div class="payout-row payout-2" style="border-radius:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank-badge rank-2">2</div>
+          <div><div style="font-weight:500;font-size:14px;">${d.name2}</div><div style="font-size:12px;color:#666;">${d.pts2} pts</div></div>
+        </div>
+        <div style="font-weight:500;color:#666;">+₹${prize2}</div>
+      </div>`;
+    const waMsg = `🏏 ${m.teams} Results!\n🥇 ${d.name1} — ${d.pts1} pts → +₹${prize1}\n🥈 ${d.name2} — ${d.pts2} pts → +₹${prize2}\n\nBetter luck next match! 💪`;
+    window._manualDraft.waMsg = waMsg;
+    document.getElementById('manual-wa-msg').textContent = waMsg;
+    document.getElementById('manual-pool-summary').textContent =
+      `Pool: ₹${d.pool} (${players.length} × ₹${m.fee}) · 1st: ₹${prize1} (custom) · 2nd: ₹${prize2} (custom)`;
+  } else if (mode === 'ai' && window._aiDraft) {
+    const prize1 = parseInt(document.getElementById('ai-edit-prize1').value) || 0;
+    const prize2 = parseInt(document.getElementById('ai-edit-prize2').value) || 0;
+    window._aiDraft.prize1 = prize1;
+    window._aiDraft.prize2 = prize2;
+    const d = window._aiDraft;
+    const m = iplSchedule[d.matchIdx];
+    document.getElementById('payout-list').innerHTML = `
+      <div class="payout-row payout-1" style="border-radius:8px;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank-badge rank-1">1</div>
+          <div><div style="font-weight:500;font-size:14px;">${d.name1}</div><div style="font-size:12px;color:#e09436;">${d.pts1} pts</div></div>
+        </div>
+        <div style="font-weight:500;color:#FAC775;">+₹${prize1}</div>
+      </div>
+      <div class="payout-row payout-2" style="border-radius:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank-badge rank-2">2</div>
+          <div><div style="font-weight:500;font-size:14px;">${d.name2}</div><div style="font-size:12px;color:#666;">${d.pts2} pts</div></div>
+        </div>
+        <div style="font-weight:500;color:#666;">+₹${prize2}</div>
+      </div>`;
+    const waMsg = `🏏 ${m.teams} Results!\n🥇 ${d.name1} — ${d.pts1} pts → +₹${prize1}\n🥈 ${d.name2} — ${d.pts2} pts → +₹${prize2}\n\nBetter luck next match! 💪`;
+    window._aiDraft.waMsg = waMsg;
+    document.getElementById('wa-result-msg').textContent = waMsg;
+    document.getElementById('pool-summary').textContent =
+      `Pool: ₹${d.pool} (${players.length} × ₹${m.fee}) · 1st: ₹${prize1} (custom) · 2nd: ₹${prize2} (custom)`;
+  }
+  togglePayoutEdit(mode);
+}
+
+function switchEntryMode(mode, btn) {
+  document.getElementById('entry-mode-ai').style.display = mode==='ai' ? 'block' : 'none';
+  document.getElementById('entry-mode-manual').style.display = mode==='manual' ? 'block' : 'none';
+  document.querySelectorAll('#result-tab-new .tab-bar .tab').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(mode==='manual') populateManualPlayerDropdowns();
+}
+
+function populateManualPlayerDropdowns() {
+  const opts = '<option value="">Select player...</option>' + players.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+  document.getElementById('manual-rank1-player').innerHTML = opts;
+  document.getElementById('manual-rank2-player').innerHTML = opts;
+}
+
+function updateManualFeeHint() {
+  const idx = parseInt(document.getElementById('manual-match-select').value);
+  const m = iplSchedule[idx];
+  const pool = players.length * m.fee;
+  document.getElementById('manual-fee-hint').textContent =
+    `Entry fee: ₹${m.fee} · Pool: ₹${pool} · 1st: ₹${Math.round(pool*PRIZE_SPLIT[0])} · 2nd: ₹${Math.round(pool*PRIZE_SPLIT[1])}`;
+}
+
+function updateManualPrizes() { /* live hint — nothing needed, preview button triggers it */ }
+
+function previewManualResults() {
+  const idx = parseInt(document.getElementById('manual-match-select').value);
+  const m = iplSchedule[idx];
+  const pool = players.length * m.fee;
+  const prize1 = Math.round(pool * PRIZE_SPLIT[0]);
+  const prize2 = Math.round(pool * PRIZE_SPLIT[1]);
+  const name1 = document.getElementById('manual-rank1-player').value;
+  const pts1  = parseInt(document.getElementById('manual-rank1-pts').value) || 0;
+  const name2 = document.getElementById('manual-rank2-player').value;
+  const pts2  = parseInt(document.getElementById('manual-rank2-pts').value) || 0;
+  if(!name1 || !name2) { alert('Please select players for 1st and 2nd place.'); return; }
+  if(name1 === name2)  { alert('1st and 2nd place cannot be the same player.'); return; }
+  document.getElementById('manual-pool-summary').textContent =
+    `Pool: ₹${pool} (${players.length} × ₹${m.fee}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
+  document.getElementById('manual-payout-list').innerHTML = `
+    <div class="payout-row payout-1" style="border-radius:8px;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="rank-badge rank-1">1</div>
+        <div><div style="font-weight:500;font-size:14px;">${name1}</div><div style="font-size:12px;color:#e09436;">${pts1} pts</div></div>
+      </div>
+      <div style="font-weight:500;color:#FAC775;">+₹${prize1}</div>
+    </div>
+    <div class="payout-row payout-2" style="border-radius:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="rank-badge rank-2">2</div>
+        <div><div style="font-weight:500;font-size:14px;">${name2}</div><div style="font-size:12px;color:#666;">${pts2} pts</div></div>
+      </div>
+      <div style="font-weight:500;color:#666;">+₹${prize2}</div>
+    </div>`;
+  const waMsg = `🏏 ${m.teams} Results!\n🥇 ${name1} — ${pts1} pts → +₹${prize1}\n🥈 ${name2} — ${pts2} pts → +₹${prize2}\n\nBetter luck next match! 💪`;
+  document.getElementById('manual-wa-msg').textContent = waMsg;
+  document.getElementById('manual-preview-card').style.display = 'block';
+  document.getElementById('manual-preview-card').scrollIntoView({behavior:'smooth'});
+  // stash for confirm
+  window._manualDraft = { matchIdx:idx, name1, pts1, prize1, name2, pts2, prize2, pool, waMsg };
+}
+
+function confirmManualResults() {
+  const d = window._manualDraft;
+  if(!d) return;
+  const m = iplSchedule[d.matchIdx];
+  const w = seasonStats.find(p=>p.name===d.name1);
+  const s = seasonStats.find(p=>p.name===d.name2);
+  if(w){ w.wins++; w.earned+=d.prize1; }
+  if(s){ s.earned+=d.prize2; }
+  savedResults.unshift({
+    matchName: m.teams, date: m.date,
+    rank1: { name:d.name1, pts:d.pts1, prize:d.prize1 },
+    rank2: { name:d.name2, pts:d.pts2, prize:d.prize2 },
+    pool: d.pool, savedAt: todayStr()
+  });
+  document.getElementById('manual-preview-card').style.display = 'none';
+  window._manualDraft = null;
+  // reset form
+  document.getElementById('manual-rank1-player').value = '';
+  document.getElementById('manual-rank1-pts').value = '';
+  document.getElementById('manual-rank2-player').value = '';
+  document.getElementById('manual-rank2-pts').value = '';
+  const notif = document.getElementById('ai-notif');
+  notif.textContent = 'Results saved! Season standings updated.';
+  notif.className = 'notification notif-success';
+  notif.style.display = 'block';
+  setTimeout(()=>notif.style.display='none', 2500);
+}
+
+function copyManualMsg() {
+  if(!window._manualDraft) return;
+  navigator.clipboard.writeText(window._manualDraft.waMsg).then(()=>alert('Message copied!'));
+}
+
+function openManualWhatsApp() {
+  if(!window._manualDraft) return;
+  window.open('https://wa.me/?text='+encodeURIComponent(window._manualDraft.waMsg),'_blank');
+}
+
+function switchResultTab(tab, btn) {
+  document.getElementById('result-tab-new').style.display = tab==='new'?'block':'none';
+  document.getElementById('result-tab-past').style.display = tab==='past'?'block':'none';
+  document.querySelectorAll('#sec-results .tab-bar .tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(tab==='past') renderPastResults();
+}
+
+function renderPastResults() {
+  const container = document.getElementById('past-results-list');
+  const empty = document.getElementById('no-past-results');
+  if(savedResults.length===0){ container.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  container.innerHTML = savedResults.map((r,i)=>`
+    <div class="result-card">
+      <div class="result-card-header">
+        <div>
+          <div style="font-weight:500;font-size:14px;">${r.matchName}</div>
+          <div style="font-size:12px;color:#666;">${r.date} · Pool ₹${r.pool} · Saved ${r.savedAt}</div>
+        </div>
+        <div class="result-actions">
+          <button class="btn-icon" onclick="openEditModal(${i})">✎ Edit</button>
+          <button class="btn-icon danger" onclick="deleteResult(${i})">🗑 Delete</button>
+        </div>
+      </div>
+      <div class="payout-row payout-1" style="border-radius:8px;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank-badge rank-1">1</div>
+          <div><div style="font-weight:500;font-size:14px;">${r.rank1.name}</div><div style="font-size:12px;color:#e09436;">${r.rank1.pts} pts</div></div>
+        </div>
+        <div style="font-weight:500;color:#FAC775;">+₹${r.rank1.prize}</div>
+      </div>
+      <div class="payout-row payout-2" style="border-radius:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank-badge rank-2">2</div>
+          <div><div style="font-weight:500;font-size:14px;">${r.rank2.name}</div><div style="font-size:12px;color:#666;">${r.rank2.pts} pts</div></div>
+        </div>
+        <div style="font-weight:500;color:#666;">+₹${r.rank2.prize}</div>
+      </div>
+    </div>`).join('');
+}
+
+function openEditModal(idx) {
+  const r = savedResults[idx];
+  document.getElementById('edit-result-idx').value = idx;
+  document.getElementById('edit-match-name').value = r.matchName + ' · ' + r.date;
+  document.getElementById('edit-rank1-name').value = r.rank1.name;
+  document.getElementById('edit-rank1-pts').value = r.rank1.pts;
+  document.getElementById('edit-prize1').value = r.rank1.prize;
+  document.getElementById('edit-rank2-name').value = r.rank2.name;
+  document.getElementById('edit-rank2-pts').value = r.rank2.pts;
+  document.getElementById('edit-prize2').value = r.rank2.prize;
+  document.getElementById('edit-result-modal').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-result-modal').classList.remove('open');
+}
+
+function saveEditedResult() {
+  const idx = parseInt(document.getElementById('edit-result-idx').value);
+  const old = savedResults[idx];
+  // Reverse old season stats
+  const oldW = seasonStats.find(p=>p.name===old.rank1.name);
+  const oldS = seasonStats.find(p=>p.name===old.rank2.name);
+  if(oldW){ oldW.wins = Math.max(0, oldW.wins-1); oldW.earned = Math.max(0, oldW.earned-old.rank1.prize); }
+  if(oldS){ oldS.earned = Math.max(0, oldS.earned-old.rank2.prize); }
+  // Apply new values
+  const r1name = document.getElementById('edit-rank1-name').value.trim();
+  const r1pts = parseInt(document.getElementById('edit-rank1-pts').value)||0;
+  const prize1 = parseInt(document.getElementById('edit-prize1').value)||0;
+  const r2name = document.getElementById('edit-rank2-name').value.trim();
+  const r2pts = parseInt(document.getElementById('edit-rank2-pts').value)||0;
+  const prize2 = parseInt(document.getElementById('edit-prize2').value)||0;
+  savedResults[idx] = { ...old, rank1:{name:r1name,pts:r1pts,prize:prize1}, rank2:{name:r2name,pts:r2pts,prize:prize2} };
+  const newW = seasonStats.find(p=>p.name===r1name);
+  const newS = seasonStats.find(p=>p.name===r2name);
+  if(newW){ newW.wins++; newW.earned+=prize1; }
+  if(newS){ newS.earned+=prize2; }
+  closeEditModal();
+  renderPastResults();
+  renderSeason();
+}
+
+function deleteResult(idx) {
+  if(!confirm('Delete this result? Season stats will be reversed.')) return;
+  const r = savedResults[idx];
+  const w = seasonStats.find(p=>p.name===r.rank1.name);
+  const s = seasonStats.find(p=>p.name===r.rank2.name);
+  if(w){ w.wins = Math.max(0,w.wins-1); w.earned = Math.max(0,w.earned-r.rank1.prize); }
+  if(s){ s.earned = Math.max(0,s.earned-r.rank2.prize); }
+  savedResults.splice(idx,1);
+  renderPastResults();
+  renderSeason();
+}
+
 function ledNotif(msg, success=true) {
   const n = document.getElementById('led-notif');
   n.textContent = msg;
@@ -782,8 +1563,8 @@ function ledNotif(msg, success=true) {
 <!-- LEDGER -->
 <div id="sec-ledger" class="section">
   <div class="grid2" style="margin-bottom:1rem;">
-    <div class="card" style="padding:0.85rem;"><div class="label">Total credits held</div><div class="metric" id="led-total" style="color:#2d7a3a;">₹0</div></div>
-    <div class="card" style="padding:0.85rem;"><div class="label">Players in debt</div><div class="metric" id="led-debt" style="color:#c0392b;">0</div></div>
+    <div class="card" style="padding:0.85rem;"><div class="label">Total credits held</div><div class="metric" id="led-total" style="color:#4caf72;">₹0</div></div>
+    <div class="card" style="padding:0.85rem;"><div class="label">Players in debt</div><div class="metric" id="led-debt" style="color:#e05555;">0</div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchTab('led-balances',this,'led')">Balances</button>
@@ -798,11 +1579,11 @@ function ledNotif(msg, success=true) {
     <div class="card">
       <div class="section-title">Add or deduct credit</div>
       <div style="margin-bottom:10px;">
-        <div style="font-size:12px;color:#888;margin-bottom:5px;">Player</div>
+        <div style="font-size:12px;color:#666;margin-bottom:5px;">Player</div>
         <select id="led-player"></select>
       </div>
       <div style="margin-bottom:10px;">
-        <div style="font-size:12px;color:#888;margin-bottom:6px;">Quick amounts</div>
+        <div style="font-size:12px;color:#666;margin-bottom:6px;">Quick amounts</div>
         <div class="topup-presets">
           <button class="preset-btn" onclick="selectPreset(100)">₹100</button>
           <button class="preset-btn" onclick="selectPreset(200)">₹200</button>
@@ -813,7 +1594,7 @@ function ledNotif(msg, success=true) {
         <input type="number" id="led-amount" placeholder="Or enter custom amount" min="1">
       </div>
       <div style="margin-bottom:12px;">
-        <div style="font-size:12px;color:#888;margin-bottom:5px;">Note (optional)</div>
+        <div style="font-size:12px;color:#666;margin-bottom:5px;">Note (optional)</div>
         <input type="text" id="led-note" placeholder="e.g. Paid for 4 matches via UPI">
       </div>
       <div style="display:flex;gap:8px;">
@@ -823,14 +1604,14 @@ function ledNotif(msg, success=true) {
     </div>
     <div class="card">
       <div class="section-title">Bulk top up — all players</div>
-      <div style="font-size:13px;color:#888;margin-bottom:12px;">Add the same amount to every player at once.</div>
+      <div style="font-size:13px;color:#666;margin-bottom:12px;">Add the same amount to every player at once.</div>
       <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
         <div style="flex:1;min-width:100px;">
-          <div style="font-size:12px;color:#888;margin-bottom:5px;">Amount each</div>
+          <div style="font-size:12px;color:#666;margin-bottom:5px;">Amount each</div>
           <input type="number" id="led-bulk-amt" placeholder="e.g. 400">
         </div>
         <div style="flex:2;min-width:140px;">
-          <div style="font-size:12px;color:#888;margin-bottom:5px;">Note</div>
+          <div style="font-size:12px;color:#666;margin-bottom:5px;">Note</div>
           <input type="text" id="led-bulk-note" placeholder="e.g. 4 match advance">
         </div>
         <button class="btn-primary" onclick="ledgerBulk()">Top up all</button>
