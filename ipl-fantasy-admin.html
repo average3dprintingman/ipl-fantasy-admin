@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPL Fantasy Admin</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; }
+.app { max-width: 600px; margin: 0 auto; padding: 1rem; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 0.5px solid #e0e0e0; }
+.header h1 { font-size: 18px; font-weight: 600; }
+.header span { font-size: 12px; color: #888; }
+.nav { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.nav-btn { padding: 7px 14px; border-radius: 8px; border: 0.5px solid #d0d0d0; background: transparent; cursor: pointer; font-size: 13px; color: #666; transition: all 0.15s; }
+.nav-btn.active { background: #f0f0f0; color: #1a1a1a; border-color: #aaa; font-weight: 500; }
+.section { display: none; }
+.section.active { display: block; }
+.card { background: #fff; border: 0.5px solid #e8e8e8; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 12px; }
+.label { font-size: 12px; color: #888; margin-bottom: 4px; }
+.metric { font-size: 22px; font-weight: 500; color: #1a1a1a; }
+.badge { display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 8px; font-weight: 500; }
+.badge-success { background: #e6f4ea; color: #2d7a3a; }
+.badge-warning { background: #fff8e1; color: #b45309; }
+.badge-danger { background: #fdecea; color: #c0392b; }
+.badge-info { background: #e8f0fe; color: #1a56db; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+.section-title { font-size: 12px; font-weight: 500; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.player-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; }
+.player-row:last-child { border-bottom: none; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: #e8f0fe; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: #1a56db; flex-shrink: 0; }
+.match-item { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 0.5px solid #f0f0f0; gap: 12px; }
+.match-item:last-child { border-bottom: none; }
+.match-teams { font-weight: 500; font-size: 14px; }
+.match-meta { font-size: 12px; color: #888; margin-top: 2px; }
+.pay-btn { padding: 5px 12px; border-radius: 8px; border: 0.5px solid #d0d0d0; background: transparent; cursor: pointer; font-size: 12px; color: #1a1a1a; transition: all 0.15s; }
+.pay-btn:hover { background: #f5f5f5; }
+.pay-btn.paid { background: #e6f4ea; color: #2d7a3a; border-color: transparent; }
+.pay-btn.debt { background: #fff8e1; color: #b45309; border-color: transparent; }
+input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 8px 10px; border: 0.5px solid #d0d0d0; border-radius: 8px; background: #fff; color: #1a1a1a; font-size: 14px; font-family: inherit; }
+textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.btn-primary { padding: 9px 18px; border-radius: 8px; border: none; background: #1a1a1a; color: #fff; cursor: pointer; font-size: 13px; font-weight: 500; }
+.btn-secondary { padding: 9px 18px; border-radius: 8px; border: 0.5px solid #d0d0d0; background: transparent; color: #1a1a1a; cursor: pointer; font-size: 13px; }
+.btn-green { padding: 9px 18px; border-radius: 8px; border: none; background: #25D366; color: #fff; cursor: pointer; font-size: 13px; font-weight: 500; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.rank-badge { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+.rank-1 { background: #FAC775; color: #412402; }
+.rank-2 { background: #f0f0f0; color: #666; }
+.tab-bar { display: flex; gap: 4px; background: #f0f0f0; border-radius: 8px; padding: 3px; margin-bottom: 1rem; }
+.tab { flex: 1; padding: 6px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 13px; color: #666; transition: all 0.15s; }
+.tab.active { background: #fff; color: #1a1a1a; font-weight: 500; }
+.payout-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; }
+.payout-1 { background: #FAEEDA; }
+.payout-2 { background: #f5f5f5; }
+.upload-area { border: 1.5px dashed #d0d0d0; border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.15s; }
+.upload-area:hover { background: #f5f5f5; }
+.notification { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: none; }
+.notif-success { background: #e6f4ea; color: #2d7a3a; }
+.notif-info { background: #e8f0fe; color: #1a56db; }
+.season-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; }
+.season-row:last-child { border-bottom: none; }
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #e0e0e0; border-top-color: #1a1a1a; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.wa-template-box { background: #f5f5f5; border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.7; color: #1a1a1a; white-space: pre-wrap; border-left: 3px solid #25D366; }
+.reminder-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; }
+.reminder-item:last-child { border-bottom: none; }
+.toggle { width: 36px; height: 20px; border-radius: 10px; background: #ccc; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+.toggle.on { background: #25D366; }
+.toggle::after { content:''; position:absolute; width:16px; height:16px; border-radius:50%; background:#fff; top:2px; left:2px; transition:left 0.2s; }
+.toggle.on::after { left:18px; }
+.img-preview { max-width: 100%; border-radius: 8px; margin-bottom: 12px; max-height: 200px; object-fit: cover; }
+.fee-chip { display: inline-flex; align-items: center; gap: 4px; background: #f0f0f0; border: 0.5px solid #d0d0d0; border-radius: 8px; padding: 3px 8px; font-size: 12px; font-weight: 500; color: #1a1a1a; cursor: pointer; transition: all 0.15s; }
+.fee-chip:hover { background: #fff; border-color: #aaa; }
+.fee-edit-panel { background: #f5f5f5; border-radius: 8px; padding: 12px; margin-top: 8px; display: none; }
+.fee-edit-panel.open { display: block; }
+.fee-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.fee-preset { padding: 5px 12px; border-radius: 8px; border: 0.5px solid #d0d0d0; background: transparent; cursor: pointer; font-size: 13px; color: #666; transition: all 0.15s; }
+.fee-preset:hover, .fee-preset.selected { background: #fff; color: #1a1a1a; border-color: #aaa; font-weight: 500; }
+@media (max-width: 480px) {
+  .grid4 { grid-template-columns: repeat(2, 1fr); }
+  .nav-btn { font-size: 12px; padding: 6px 10px; }
+}
+
+.credit-bar-bg { height: 5px; background: #e8e8e8; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+.credit-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.credit-bar-wrap { flex: 1; min-width: 60px; }
+.ledger-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 0.5px solid #f0f0f0; font-size: 13px; }
+.ledger-row:last-child { border-bottom: none; }
+.ledger-date { font-size: 11px; color: #888; margin-top: 2px; }
+.credit-positive { color: #2d7a3a; font-weight: 500; }
+.credit-negative { color: #c0392b; font-weight: 500; }
+.preset-btn { padding: 5px 12px; border-radius: 8px; border: 0.5px solid #d0d0d0; background: transparent; cursor: pointer; font-size: 13px; color: #666; transition: all 0.15s; }
+.preset-btn:hover, .preset-btn.sel { background: #fff; color: #1a1a1a; border-color: #aaa; font-weight: 500; }
+.topup-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <h1>🏏 IPL Fantasy Admin</h1>
+  <span>Season 2026</span>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showSection('dashboard',this)">Dashboard</button>
+  <button class="nav-btn" onclick="showSection('matches',this)">Matches</button>
+  <button class="nav-btn" onclick="showSection('payments',this)">Payments</button>
+  <button class="nav-btn" onclick="showSection('results',this)">Results</button>
+  <button class="nav-btn" onclick="showSection('whatsapp',this)">WhatsApp</button>
+  <button class="nav-btn" onclick="showSection('players',this)">Players</button>
+  <button class="nav-btn" onclick="showSection('season',this)">Season</button>
+  <button class="nav-btn" onclick="showSection('ledger',this)">Credits</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="sec-dashboard" class="section active">
+  <div class="grid4" style="margin-bottom:1rem;">
+    <div class="card" style="padding:0.85rem;"><div class="label">Today's matches</div><div class="metric">2</div></div>
+    <div class="card" style="padding:0.85rem;"><div class="label">Collected today</div><div class="metric" id="dash-collected">₹1,400</div></div>
+    <div class="card" style="padding:0.85rem;"><div class="label">Total debt</div><div class="metric">₹200</div></div>
+    <div class="card" style="padding:0.85rem;"><div class="label">Matches played</div><div class="metric">3</div></div>
+  </div>
+  <div class="card">
+    <div class="section-title">Upcoming matches</div>
+    <div id="dash-upcoming"></div>
+  </div>
+  <div class="card">
+    <div class="section-title">Last result · RR vs PBKS</div>
+    <div class="payout-row payout-1"><div style="display:flex;align-items:center;gap:10px;"><div class="rank-badge rank-1">1</div><div style="font-weight:500;">Arjun</div></div><div style="font-weight:500;color:#412402;">+₹560</div></div>
+    <div class="payout-row payout-2"><div style="display:flex;align-items:center;gap:10px;"><div class="rank-badge rank-2">2</div><div style="font-weight:500;">Priya</div></div><div style="font-weight:500;color:#666;">+₹240</div></div>
+  </div>
+</div>
+
+<!-- MATCHES -->
+<div id="sec-matches" class="section">
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('upcoming',this,'match')">Upcoming</button>
+    <button class="tab" onclick="switchTab('past',this,'match')">Past</button>
+    <button class="tab" onclick="switchTab('all',this,'match')">All IPL</button>
+  </div>
+  <div id="match-upcoming"><div class="card"><div id="upcoming-list"></div></div></div>
+  <div id="match-past" style="display:none;"><div class="card">
+    <div class="match-item"><div><div class="match-teams">RR vs PBKS</div><div class="match-meta">Mar 20 · 7:30 PM · Entry ₹100</div></div><span class="badge badge-success">Done</span></div>
+    <div class="match-item"><div><div class="match-teams">GT vs LSG</div><div class="match-meta">Mar 19 · 3:30 PM · Entry ₹100</div></div><span class="badge badge-success">Done</span></div>
+    <div class="match-item"><div><div class="match-teams">MI vs DC</div><div class="match-meta">Mar 18 · 7:30 PM · Entry ₹100</div></div><span class="badge badge-success">Done</span></div>
+  </div></div>
+  <div id="match-all" style="display:none;"><div class="card"><div class="section-title">IPL 2026 — full schedule</div><div id="all-matches-list"></div></div></div>
+</div>
+
+<!-- PAYMENTS -->
+<div id="sec-payments" class="section">
+  <div class="notification notif-success" id="pay-notif">Payment status updated</div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div><div style="font-weight:500;" id="pay-match-title">MI vs CSK</div><div class="match-meta" id="pay-match-meta">Today · 7:30 PM · Entry: ₹100</div></div>
+      <span class="badge badge-warning" id="paid-count-badge">6 / 8 paid</span>
+    </div>
+    <div id="payment-list"></div>
+    <div style="margin-top:12px;padding-top:12px;border-top:0.5px solid #f0f0f0;font-size:12px;color:#888;">Tap to toggle: Unpaid → Paid → Debt</div>
+  </div>
+  <div class="card"><div class="section-title">Outstanding debts</div>
+    <div class="player-row">
+      <div style="display:flex;align-items:center;gap:10px;"><div class="avatar">RS</div><div><div style="font-size:14px;font-weight:500;">Rohit S</div><div style="font-size:12px;color:#888;">2 matches unpaid</div></div></div>
+      <div style="font-weight:500;color:#b45309;">₹200</div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="sec-results" class="section">
+  <div class="notification notif-info" id="ai-notif"></div>
+  <div class="card" style="margin-bottom:12px;">
+    <div class="section-title">Select match</div>
+    <select id="result-match-select" style="margin-bottom:12px;" onchange="updateResultFeeHint()">
+      <option value="0">MI vs CSK — Today 7:30 PM</option>
+      <option value="1">RCB vs KKR — Mar 23 3:30 PM</option>
+      <option value="2">DC vs SRH — Mar 23 7:30 PM</option>
+    </select>
+    <div id="result-fee-hint" style="font-size:12px;color:#888;margin-bottom:12px;"></div>
+    <div class="section-title">Upload Dream11 screenshot</div>
+    <div class="upload-area" onclick="document.getElementById('file-input').click()">
+      <div style="font-size:28px;margin-bottom:8px;">📸</div>
+      <div style="font-weight:500;margin-bottom:4px;">Tap to upload screenshot</div>
+      <div style="font-size:12px;color:#888;">Dream11 contest leaderboard after match ends</div>
+    </div>
+    <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleScreenshot(this)">
+  </div>
+  <div class="card" id="ai-loading-card" style="display:none;text-align:center;padding:2rem;">
+    <div class="spinner"></div><span style="font-size:14px;color:#888;">Reading leaderboard with Claude AI...</span>
+  </div>
+  <div class="card" id="result-preview" style="display:none;">
+    <div class="section-title">Calculated payouts</div>
+    <img id="uploaded-img" class="img-preview" src="" alt="Screenshot">
+    <div style="background:#f5f5f5;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#888;" id="pool-summary"></div>
+    <div id="payout-list"></div>
+    <div style="margin-top:14px;"><div style="font-weight:500;font-size:13px;margin-bottom:8px;">WhatsApp message preview</div>
+    <div class="wa-template-box" id="wa-result-msg"></div></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button class="btn-primary" onclick="confirmResults()">Confirm & save</button>
+      <button class="btn-secondary" onclick="copyResultMsg()">Copy message</button>
+      <button class="btn-green" onclick="openWhatsApp()">Open in WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- WHATSAPP -->
+<div id="sec-whatsapp" class="section">
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('wa-reminders',this,'wa')">Reminders</button>
+    <button class="tab" onclick="switchTab('wa-templates',this,'wa')">Templates</button>
+    <button class="tab" onclick="switchTab('wa-players',this,'wa')">Recipients</button>
+  </div>
+  <div id="wa-tab-wa-reminders">
+    <div class="card">
+      <div class="section-title">Automated reminders · MI vs CSK today</div>
+      <div class="reminder-item"><div><div style="font-size:14px;font-weight:500;">Morning reminder</div><div style="font-size:12px;color:#888;">Sent at 10:00 AM on match day</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-success" id="r1-status">Sent</span><div class="toggle on" id="t1" onclick="toggleReminder('t1','r1-status')"></div></div></div>
+      <div class="reminder-item"><div><div style="font-size:14px;font-weight:500;">2 hours before</div><div style="font-size:12px;color:#888;">Sent at 5:30 PM · deadline reminder</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-warning" id="r2-status">Pending</span><div class="toggle on" id="t2" onclick="toggleReminder('t2','r2-status')"></div></div></div>
+      <div class="reminder-item"><div><div style="font-size:14px;font-weight:500;">Final warning</div><div style="font-size:12px;color:#888;">30 mins before toss — unpaid only</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-info" id="r3-status">Scheduled</span><div class="toggle on" id="t3" onclick="toggleReminder('t3','r3-status')"></div></div></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Send manual message now</div>
+      <div style="margin-bottom:12px;"><textarea id="manual-msg">⚠️ MI vs CSK tonight at 7:30 PM!
+Pay ₹100 to [UPI] before 6:30 PM.
+Pick your Dream11 team before toss! 🏏</textarea></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-green" onclick="sendManualMsg()">Send to all players</button>
+        <button class="btn-secondary" onclick="previewMsg()">Preview</button>
+      </div>
+      <div id="manual-preview" style="display:none;margin-top:12px;"><div style="font-size:12px;color:#888;margin-bottom:6px;">Preview</div><div class="wa-template-box" id="manual-preview-text"></div></div>
+    </div>
+  </div>
+  <div id="wa-tab-wa-templates" style="display:none;">
+    <div class="card"><div class="section-title">Morning reminder</div><div style="margin-bottom:8px;"><textarea id="tpl-morning">🏏 Match day! {team1} vs {team2}
+📅 {date} · {time}
+💰 Entry: ₹{fee} — pay to [your UPI]
+⏰ Deadline: {deadline}
+Pick your Dream11 team before toss!</textarea></div><button class="btn-secondary btn-sm" onclick="saveTpl()">Save</button></div>
+    <div class="card"><div class="section-title">Final warning</div><div style="margin-bottom:8px;"><textarea id="tpl-final">⚠️ Last chance! {team1} vs {team2} starts in 30 mins.
+Unpaid: {unpaid_players}
+Pay now or you'll be marked as debt 📋</textarea></div><button class="btn-secondary btn-sm" onclick="saveTpl()">Save</button></div>
+    <div class="card"><div class="section-title">Results</div><div style="margin-bottom:8px;"><textarea id="tpl-results">🏆 {team1} vs {team2} Results!
+🥇 {winner1} — {pts1} pts → +₹{prize1}
+🥈 {winner2} — {pts2} pts → +₹{prize2}
+Better luck next match! 💪</textarea></div><button class="btn-secondary btn-sm" onclick="saveTpl()">Save</button></div>
+  </div>
+  <div id="wa-tab-wa-players" style="display:none;">
+    <div class="card"><div class="section-title">Player WhatsApp numbers</div><div id="wa-player-list"></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid #f0f0f0;font-size:12px;color:#888;">Numbers used to generate WhatsApp links.</div></div>
+  </div>
+</div>
+
+<!-- PLAYERS -->
+<div id="sec-players" class="section">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div class="section-title" style="margin:0;">Player roster</div>
+      <button class="btn-secondary btn-sm" onclick="toggleAddPlayer()">+ Add player</button>
+    </div>
+    <div id="add-player-form" style="display:none;margin-bottom:14px;padding:12px;background:#f5f5f5;border-radius:8px;">
+      <div style="margin-bottom:8px;"><input type="text" id="new-name" placeholder="Player name"></div>
+      <div style="margin-bottom:8px;"><input type="text" id="new-dream11" placeholder="Dream11 username"></div>
+      <div style="margin-bottom:8px;"><input type="text" id="new-phone" placeholder="WhatsApp number (91XXXXXXXXXX)"></div>
+      <div style="display:flex;gap:8px;"><button class="btn-primary" onclick="addPlayer()">Add</button><button class="btn-secondary" onclick="toggleAddPlayer()">Cancel</button></div>
+    </div>
+    <div id="player-list"></div>
+  </div>
+</div>
+
+<!-- SEASON -->
+<div id="sec-season" class="section">
+  <div class="grid2" style="margin-bottom:1rem;">
+    <div class="card" style="padding:0.85rem;"><div class="label">Total pool</div><div class="metric">₹2,400</div></div>
+    <div class="card" style="padding:0.85rem;"><div class="label">Matches done</div><div class="metric">3</div></div>
+  </div>
+  <div class="card"><div class="section-title">Season leaderboard</div><div id="season-list"></div></div>
+</div>
+
+<script>
+const PRIZE_SPLIT = [0.70, 0.30];
+const FEE_PRESETS = [50, 100, 200, 500];
+
+let players = [
+  { id:1, name:'Arjun', dream11:'arjun_d11', initials:'AR', phone:'919876543210' },
+  { id:2, name:'Priya', dream11:'priya_d11', initials:'PR', phone:'919876543211' },
+  { id:3, name:'Rahul', dream11:'rahul_d11', initials:'RA', phone:'919876543212' },
+  { id:4, name:'Sneha', dream11:'sneha_d11', initials:'SN', phone:'919876543213' },
+  { id:5, name:'Karan', dream11:'karan_d11', initials:'KA', phone:'919876543214' },
+  { id:6, name:'Divya', dream11:'divya_d11', initials:'DI', phone:'919876543215' },
+  { id:7, name:'Rohit S', dream11:'rohit_d11', initials:'RS', phone:'919876543216' },
+  { id:8, name:'Meera', dream11:'meera_d11', initials:'ME', phone:'919876543217' },
+];
+
+let matchPayments = { 0:{ 1:true,2:true,3:true,4:true,5:true,6:true,7:false,8:false } };
+let aiResults = null;
+let activeMatchIdx = 0;
+
+let iplSchedule = [
+  { date:'Mar 28', teams:'RCB vs SRH', time:'7:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
+  { date:'Mar 29', teams:'MI vs KKR', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
+  { date:'Mar 30', teams:'RR vs CSK', time:'7:30 PM', venue:'ACA Stadium, Guwahati', fee:100 },
+  { date:'Mar 31', teams:'PBKS vs GT', time:'7:30 PM', venue:'New PCA Stadium, Chandigarh', fee:100 },
+  { date:'Apr 1', teams:'LSG vs DC', time:'7:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
+  { date:'Apr 2', teams:'KKR vs SRH', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
+  { date:'Apr 3', teams:'CSK vs PBKS', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
+  { date:'Apr 4', teams:'DC vs MI', time:'3:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
+  { date:'Apr 4', teams:'GT vs RR', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
+  { date:'Apr 5', teams:'SRH vs LSG', time:'3:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
+  { date:'Apr 5', teams:'RCB vs CSK', time:'7:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
+  { date:'Apr 6', teams:'KKR vs PBKS', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
+  { date:'Apr 7', teams:'RR vs MI', time:'7:30 PM', venue:'ACA Stadium, Guwahati', fee:100 },
+  { date:'Apr 8', teams:'DC vs GT', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
+  { date:'Apr 9', teams:'KKR vs LSG', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
+  { date:'Apr 10', teams:'RR vs RCB', time:'7:30 PM', venue:'ACA Stadium, Guwahati', fee:100 },
+  { date:'Apr 11', teams:'PBKS vs SRH', time:'3:30 PM', venue:'New PCA Stadium, Chandigarh', fee:100 },
+  { date:'Apr 11', teams:'CSK vs DC', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
+  { date:'Apr 12', teams:'LSG vs GT', time:'3:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
+  { date:'Apr 12', teams:'MI vs RCB', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
+];
+
+let seasonStats = [
+  { id:1, name:'Arjun', initials:'AR', wins:2, earned:1120, paid:300 },
+  { id:2, name:'Priya', initials:'PR', wins:1, earned:240, paid:300 },
+  { id:3, name:'Rahul', initials:'RA', wins:0, earned:0, paid:300 },
+  { id:4, name:'Sneha', initials:'SN', wins:0, earned:0, paid:300 },
+  { id:5, name:'Karan', initials:'KA', wins:0, earned:0, paid:300 },
+  { id:6, name:'Divya', initials:'DI', wins:0, earned:0, paid:300 },
+  { id:7, name:'Rohit S', initials:'RS', wins:0, earned:0, paid:100 },
+  { id:8, name:'Meera', initials:'ME', wins:0, earned:0, paid:300 },
+];
+
+function feeChipHTML(idx) {
+  return `<span class="fee-chip" onclick="toggleFeePanel(${idx})">₹${iplSchedule[idx].fee} <span style="font-size:10px;opacity:0.6;">✎</span></span>`;
+}
+
+function feePanelHTML(idx) {
+  const m = iplSchedule[idx];
+  return `<div class="fee-edit-panel" id="fee-panel-${idx}">
+    <div style="font-size:12px;color:#888;margin-bottom:8px;">Set entry fee for this match</div>
+    <div class="fee-presets" id="fee-presets-${idx}">
+      ${FEE_PRESETS.map(f=>`<button class="fee-preset ${m.fee===f?'selected':''}" onclick="selectFeePreset(${idx},${f})">₹${f}</button>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="number" id="fee-custom-${idx}" placeholder="Custom amount" value="${!FEE_PRESETS.includes(m.fee)?m.fee:''}" style="flex:1;">
+      <button class="btn-primary btn-sm" onclick="saveFee(${idx})">Save</button>
+      <button class="btn-secondary btn-sm" onclick="toggleFeePanel(${idx})">Cancel</button>
+    </div>
+  </div>`;
+}
+
+function toggleFeePanel(idx) {
+  const p = document.getElementById('fee-panel-'+idx);
+  if(p) p.classList.toggle('open');
+}
+
+function selectFeePreset(idx, fee) {
+  iplSchedule[idx].fee = fee;
+  document.getElementById('fee-custom-'+idx).value = '';
+  document.querySelectorAll(`#fee-presets-${idx} .fee-preset`).forEach(b => {
+    b.classList.toggle('selected', parseInt(b.textContent.replace('₹','')) === fee);
+  });
+}
+
+function saveFee(idx) {
+  const custom = document.getElementById('fee-custom-'+idx).value;
+  if(custom && parseInt(custom)>0) iplSchedule[idx].fee = parseInt(custom);
+  renderMatches(); renderDashUpcoming(); updateResultFeeHint();
+  const p = document.getElementById('fee-panel-'+idx);
+  if(p) p.classList.remove('open');
+}
+
+function renderDashUpcoming() {
+  document.getElementById('dash-upcoming').innerHTML = iplSchedule.slice(0,3).map((m,i) => `
+    <div class="match-item">
+      <div><div class="match-teams">${m.teams}</div><div class="match-meta">${m.date} · ${m.time} · Entry ₹${m.fee}</div></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="badge ${i===0?'badge-warning':'badge-info'}">${i===0?'6 paid':'Upcoming'}</span>
+        ${i===0?'<button class="btn-secondary btn-sm" onclick="showSection(\'payments\',null)">Manage</button>':''}
+      </div>
+    </div>`).join('');
+}
+
+function renderMatches() {
+  const upcomingHTML = (list, offset) => list.map((m,i) => `
+    <div class="match-item">
+      <div style="flex:1;">
+        <div class="match-teams">${m.teams}</div>
+        <div class="match-meta">${m.date} · ${m.time} · ${m.venue}</div>
+        ${feePanelHTML(i+offset)}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        ${feeChipHTML(i+offset)}
+        <span class="badge badge-info" style="font-size:10px;">M${i+offset+4}</span>
+      </div>
+    </div>`).join('');
+  document.getElementById('upcoming-list').innerHTML = upcomingHTML(iplSchedule.slice(0,6), 0);
+  document.getElementById('all-matches-list').innerHTML = upcomingHTML(iplSchedule, 0);
+}
+
+function renderPayments() {
+  const m = iplSchedule[activeMatchIdx];
+  const payments = matchPayments[activeMatchIdx] || {};
+  const paidCount = Object.values(payments).filter(v=>v===true).length;
+  document.getElementById('pay-match-title').textContent = m.teams;
+  document.getElementById('pay-match-meta').textContent = `${m.date} · ${m.time} · Entry: ₹${m.fee}`;
+  document.getElementById('paid-count-badge').textContent = paidCount+' / '+players.length+' paid';
+  document.getElementById('payment-list').innerHTML = players.map(p => {
+    const s = payments[p.id];
+    const cls = s===true?'paid':s==='debt'?'debt':'';
+    const lbl = s===true?'✓ Paid':s==='debt'?'⚠ Debt':'Unpaid';
+    return `<div class="player-row">
+      <div style="display:flex;align-items:center;gap:10px;"><div class="avatar">${p.initials}</div><div style="font-size:14px;font-weight:500;">${p.name}</div></div>
+      <button class="pay-btn ${cls}" onclick="togglePayment(${activeMatchIdx},${p.id})">${lbl} · ₹${m.fee}</button>
+    </div>`;
+  }).join('');
+}
+
+function togglePayment(matchIdx, id) {
+  if(!matchPayments[matchIdx]) matchPayments[matchIdx]={};
+  const cur = matchPayments[matchIdx][id];
+  matchPayments[matchIdx][id] = !cur?true:cur===true?'debt':false;
+  renderPayments();
+  const n = document.getElementById('pay-notif');
+  n.style.display='block';
+  setTimeout(()=>n.style.display='none',1800);
+}
+
+function updateResultFeeHint() {
+  const idx = parseInt(document.getElementById('result-match-select').value);
+  const m = iplSchedule[idx];
+  const pool = players.length * m.fee;
+  document.getElementById('result-fee-hint').textContent =
+    `Entry fee: ₹${m.fee} · Pool: ₹${pool} · 1st: ₹${Math.round(pool*0.7)} · 2nd: ₹${Math.round(pool*0.3)}`;
+}
+
+async function handleScreenshot(input) {
+  if(!input.files||!input.files[0]) return;
+  const file = input.files[0];
+  const idx = parseInt(document.getElementById('result-match-select').value);
+  const matchFee = iplSchedule[idx].fee;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result.split(',')[1];
+    const mediaType = file.type;
+    document.getElementById('ai-loading-card').style.display='block';
+    document.getElementById('result-preview').style.display='none';
+    const notif = document.getElementById('ai-notif');
+    notif.className='notification notif-info';
+    notif.textContent='Claude AI is reading the leaderboard...';
+    notif.style.display='block';
+    const playerNames = players.map(p=>p.name).join(', ');
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:1000,
+          messages:[{role:'user',content:[
+            {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
+            {type:'text',text:`This is a Dream11 fantasy cricket contest leaderboard screenshot. Our group players are: ${playerNames}. Extract rankings for our group members only. Return ONLY a JSON array (no markdown, no explanation): [{"rank":1,"name":"PlayerName","points":245}]. Order by rank ascending.`}
+          ]}]
+        })
+      });
+      const data = await response.json();
+      const raw = data.content.map(c=>c.text||'').join('');
+      const rankings = JSON.parse(raw.replace(/```json|```/g,'').trim());
+      aiResults = { rankings, matchFee, matchIdx: idx };
+      showPayoutPreview(rankings, file, matchFee, idx);
+      notif.textContent='Leaderboard read successfully!';
+      notif.className='notification notif-success';
+      setTimeout(()=>notif.style.display='none',2500);
+    } catch(err) {
+      notif.textContent='Could not read screenshot. Please check the image and try again.';
+      document.getElementById('ai-loading-card').style.display='none';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function showPayoutPreview(rankings, file, matchFee, matchIdx) {
+  document.getElementById('ai-loading-card').style.display='none';
+  const m = iplSchedule[matchIdx];
+  const pool = players.length * matchFee;
+  const prize1 = Math.round(pool*PRIZE_SPLIT[0]);
+  const prize2 = Math.round(pool*PRIZE_SPLIT[1]);
+  document.getElementById('uploaded-img').src = URL.createObjectURL(file);
+  document.getElementById('pool-summary').textContent =
+    `Pool: ₹${pool} (${players.length} × ₹${matchFee}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
+  document.getElementById('payout-list').innerHTML = rankings.slice(0,2).map((r,i)=>`
+    <div class="payout-row ${i===0?'payout-1':'payout-2'}">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="rank-badge ${i===0?'rank-1':'rank-2'}">${r.rank}</div>
+        <div><div style="font-weight:500;font-size:14px;">${r.name}</div>
+        <div style="font-size:12px;color:${i===0?'#633806':'#888'};">${r.points} pts</div></div>
+      </div>
+      <div style="font-weight:500;color:${i===0?'#412402':'#666'};">+₹${i===0?prize1:prize2}</div>
+    </div>`).join('');
+  const waMsg = `🏏 ${m.teams} Results!\n🥇 ${rankings[0]?.name} — ${rankings[0]?.points} pts → +₹${prize1}\n🥈 ${rankings[1]?.name} — ${rankings[1]?.points} pts → +₹${prize2}\n\nBetter luck next match! 💪`;
+  document.getElementById('wa-result-msg').textContent = waMsg;
+  document.getElementById('result-preview').style.display='block';
+  document.getElementById('result-preview').scrollIntoView({behavior:'smooth'});
+}
+
+function confirmResults() {
+  if(aiResults && aiResults.rankings.length>=2) {
+    const pool = players.length * aiResults.matchFee;
+    const w = seasonStats.find(p=>p.name===aiResults.rankings[0].name);
+    const s = seasonStats.find(p=>p.name===aiResults.rankings[1].name);
+    if(w){w.wins++;w.earned+=Math.round(pool*0.7);}
+    if(s){s.earned+=Math.round(pool*0.3);}
+  }
+  document.getElementById('result-preview').style.display='none';
+  const notif=document.getElementById('ai-notif');
+  notif.textContent='Results saved! Season standings updated.';
+  notif.className='notification notif-success';
+  notif.style.display='block';
+  setTimeout(()=>notif.style.display='none',2500);
+}
+
+function copyResultMsg() {
+  navigator.clipboard.writeText(document.getElementById('wa-result-msg').textContent).then(()=>alert('Message copied!'));
+}
+
+function openWhatsApp() {
+  window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('wa-result-msg').textContent),'_blank');
+}
+
+function sendManualMsg() {
+  const msg = encodeURIComponent(document.getElementById('manual-msg').value);
+  if(!players[0]?.phone){alert('Add WhatsApp numbers in the Recipients tab first.');return;}
+  window.open('https://wa.me/'+players[0].phone+'?text='+msg,'_blank');
+  alert('WhatsApp opened for first player. For all 8, use a WhatsApp Broadcast list.');
+}
+
+function previewMsg() {
+  const p = document.getElementById('manual-preview');
+  p.style.display = p.style.display==='none'?'block':'none';
+  document.getElementById('manual-preview-text').textContent = document.getElementById('manual-msg').value;
+}
+
+function renderPlayers() {
+  document.getElementById('player-list').innerHTML = players.map(p=>`
+    <div class="player-row">
+      <div style="display:flex;align-items:center;gap:10px;"><div class="avatar">${p.initials}</div>
+        <div><div style="font-size:14px;font-weight:500;">${p.name}</div><div style="font-size:12px;color:#888;">${p.dream11}</div></div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="pay-btn" onclick="editPlayer(${p.id})">Edit</button>
+        <button class="pay-btn" style="color:#c0392b;" onclick="removePlayer(${p.id})">Remove</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderWaPlayers() {
+  document.getElementById('wa-player-list').innerHTML = players.map(p=>`
+    <div class="player-row">
+      <div style="display:flex;align-items:center;gap:10px;"><div class="avatar">${p.initials}</div><div style="font-size:14px;font-weight:500;">${p.name}</div></div>
+      <input type="text" value="${p.phone}" placeholder="91XXXXXXXXXX" style="width:160px;font-size:12px;" onchange="updatePhone(${p.id},this.value)">
+    </div>`).join('');
+}
+
+function renderSeason() {
+  const sorted = [...seasonStats].sort((a,b)=>b.earned-a.earned);
+  document.getElementById('season-list').innerHTML = sorted.map((p,i)=>`
+    <div class="season-row">
+      <div class="rank-badge ${i===0?'rank-1':'rank-2'}">${i+1}</div>
+      <div class="avatar">${p.initials}</div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:500;">${p.name}</div><div style="font-size:12px;color:#888;">${p.wins} win${p.wins!==1?'s':''} · Paid ₹${p.paid}</div></div>
+      <div style="text-align:right;">
+        <div style="font-weight:500;color:${p.earned>0?'#2d7a3a':'#888'};">+₹${p.earned}</div>
+        <div style="font-size:12px;color:#888;">net ${p.earned-p.paid>=0?'+':''}₹${p.earned-p.paid}</div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleAddPlayer() {
+  const f=document.getElementById('add-player-form');
+  f.style.display=f.style.display==='none'?'block':'none';
+}
+
+function addPlayer() {
+  const name=document.getElementById('new-name').value.trim();
+  const d11=document.getElementById('new-dream11').value.trim();
+  const phone=document.getElementById('new-phone').value.trim();
+  if(!name) return;
+  const initials=name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  players.push({id:Date.now(),name,dream11:d11||name.toLowerCase()+'_d11',initials,phone:phone||''});
+  document.getElementById('new-name').value='';
+  document.getElementById('new-dream11').value='';
+  document.getElementById('new-phone').value='';
+  toggleAddPlayer(); renderPlayers();
+}
+
+function removePlayer(id){players=players.filter(p=>p.id!==id);renderPlayers();}
+
+function editPlayer(id) {
+  const p=players.find(x=>x.id===id);
+  const name=prompt('Edit name:',p.name);
+  if(name){p.name=name;p.initials=name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+  const d11=prompt('Dream11 username:',p.dream11);
+  if(d11) p.dream11=d11;
+  renderPlayers();
+}
+
+function updatePhone(id,val){const p=players.find(x=>x.id===id);if(p)p.phone=val;}
+
+function toggleReminder(tId,sId) {
+  const t=document.getElementById(tId);
+  t.classList.toggle('on');
+  document.getElementById(sId).style.display=t.classList.contains('on')?'inline-block':'none';
+}
+
+function saveTpl(){alert('Template saved!');}
+
+function showSection(id,btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  else document.querySelectorAll('.nav-btn').forEach(b=>{if((b.getAttribute('onclick')||'').includes("'"+id+"'"))b.classList.add('active');});
+  if(id==='players') renderPlayers();
+  if(id==='matches') renderMatches();
+  if(id==='payments') renderPayments();
+  if(id==='season') renderSeason();
+  if(id==='whatsapp') renderWaPlayers();
+  if(id==='ledger') refreshLedger();
+  if(id==='results') updateResultFeeHint();
+}
+
+function switchTab(tab,btn,group) {
+  if(group==='match'){
+    ['upcoming','past','all'].forEach(t=>document.getElementById('match-'+t).style.display=t===tab?'block':'none');
+  } else if(group==='wa'){
+    ['wa-reminders','wa-templates','wa-players'].forEach(t=>document.getElementById('wa-tab-'+t).style.display=t===tab?'block':'none');
+  } else if(group==='led'){
+    ['led-balances','led-topup','led-history'].forEach(t=>document.getElementById('led-tab-'+t).style.display=t===tab?'block':'none');
+  }
+  btn.closest('.tab-bar').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+renderDashUpcoming(); renderMatches(); renderPayments(); renderPlayers(); renderSeason(); updateResultFeeHint();
+
+let ledger = {};
+let ledgerPreset = null;
+
+function initLedger() {
+  players.forEach(p => { if (!ledger[p.id]) ledger[p.id] = { balance:0, transactions:[] }; });
+}
+
+function selectPreset(amt) {
+  ledgerPreset = amt;
+  document.getElementById('led-amount').value = '';
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.toggle('sel', parseInt(b.textContent.replace(/[^0-9]/g,'')) === amt);
+  });
+}
+
+function ledgerCredit() {
+  const pid = parseInt(document.getElementById('led-player').value);
+  const amt = parseInt(document.getElementById('led-amount').value) || ledgerPreset;
+  const note = document.getElementById('led-note').value.trim() || 'Manual top up';
+  if (!pid || !amt || amt <= 0) { ledNotif('Select a player and amount', false); return; }
+  initLedger();
+  ledger[pid].balance += amt;
+  ledger[pid].transactions.unshift({ type:'credit', amount:amt, note, date:todayStr() });
+  resetLedgerForm(); refreshLedger();
+  ledNotif('₹' + amt + ' credited to ' + players.find(p=>p.id===pid)?.name);
+}
+
+function ledgerDebit() {
+  const pid = parseInt(document.getElementById('led-player').value);
+  const amt = parseInt(document.getElementById('led-amount').value) || ledgerPreset;
+  const note = document.getElementById('led-note').value.trim() || 'Manual deduction';
+  if (!pid || !amt || amt <= 0) { ledNotif('Select a player and amount', false); return; }
+  initLedger();
+  ledger[pid].balance -= amt;
+  ledger[pid].transactions.unshift({ type:'debit', amount:amt, note, date:todayStr() });
+  resetLedgerForm(); refreshLedger();
+  ledNotif('₹' + amt + ' deducted from ' + players.find(p=>p.id===pid)?.name);
+}
+
+function ledgerBulk() {
+  const amt = parseInt(document.getElementById('led-bulk-amt').value);
+  const note = document.getElementById('led-bulk-note').value.trim() || 'Bulk top up';
+  if (!amt || amt <= 0) { ledNotif('Enter a valid amount', false); return; }
+  initLedger();
+  players.forEach(p => {
+    ledger[p.id].balance += amt;
+    ledger[p.id].transactions.unshift({ type:'credit', amount:amt, note, date:todayStr() });
+  });
+  document.getElementById('led-bulk-amt').value = '';
+  document.getElementById('led-bulk-note').value = '';
+  refreshLedger();
+  ledNotif('₹' + amt + ' credited to all ' + players.length + ' players');
+}
+
+function resetLedgerForm() {
+  document.getElementById('led-amount').value = '';
+  document.getElementById('led-note').value = '';
+  ledgerPreset = null;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('sel'));
+}
+
+function todayStr() {
+  const d = new Date();
+  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+}
+
+function refreshLedger() {
+  initLedger();
+  let total = 0, debt = 0;
+  players.forEach(p => { const b = ledger[p.id].balance; if(b>0) total+=b; if(b<0) debt++; });
+  document.getElementById('led-total').textContent = '₹' + total;
+  document.getElementById('led-debt').textContent = debt;
+
+  const maxBal = Math.max(...players.map(p => Math.abs(ledger[p.id].balance)), 1);
+  const sorted = [...players].sort((a,b) => ledger[b.id].balance - ledger[a.id].balance);
+  document.getElementById('led-balance-list').innerHTML = sorted.map(p => {
+    const bal = ledger[p.id].balance;
+    const matchesLeft = bal > 0 ? Math.floor(bal / 100) : 0;
+    const barPct = Math.min(100, Math.round(Math.abs(bal) / maxBal * 100));
+    const barColor = bal > 0 ? '#2d7a3a' : bal < 0 ? '#c0392b' : '#e0e0e0';
+    const badgeClass = bal > 0 ? 'badge-success' : bal < 0 ? 'badge-danger' : 'badge-info';
+    const badgeLabel = bal > 0 ? matchesLeft + ' match' + (matchesLeft!==1?'es':'') + ' left' : bal < 0 ? 'In debt' : 'Zero';
+    return '<div class="player-row">' +
+      '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">' +
+        '<div class="avatar">' + p.initials + '</div>' +
+        '<div><div style="font-size:14px;font-weight:500;">' + p.name + '</div>' +
+        '<span class="badge ' + badgeClass + '" style="margin-top:3px;">' + badgeLabel + '</span></div>' +
+      '</div>' +
+      '<div class="credit-bar-wrap"><div class="credit-bar-bg"><div class="credit-bar-fill" style="width:' + barPct + '%;background:' + barColor + ';"></div></div></div>' +
+      '<div style="text-align:right;flex-shrink:0;min-width:60px;">' +
+        '<div style="font-size:15px;font-weight:500;color:' + (bal>0?'#2d7a3a':bal<0?'#c0392b':'#888') + ';">' + (bal>=0?'':'−') + '₹' + Math.abs(bal) + '</div>' +
+        '<button class="pay-btn btn-sm" style="margin-top:4px;" onclick="openLedgerFor(' + p.id + ')">Top up</button>' +
+      '</div></div>';
+  }).join('');
+
+  let allTx = [];
+  players.forEach(p => {
+    (ledger[p.id].transactions || []).forEach(tx => allTx.push({...tx, playerName:p.name, initials:p.initials}));
+  });
+  if (allTx.length === 0) {
+    document.getElementById('led-history-list').innerHTML = '<div style="font-size:13px;color:#888;padding:1rem 0;text-align:center;">No transactions yet</div>';
+  } else {
+    document.getElementById('led-history-list').innerHTML = allTx.map(tx =>
+      '<div class="ledger-row">' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<div class="avatar" style="width:28px;height:28px;font-size:10px;">' + tx.initials + '</div>' +
+          '<div><div style="font-size:13px;font-weight:500;">' + tx.playerName + '</div>' +
+          '<div class="ledger-date">' + tx.note + ' · ' + tx.date + '</div></div>' +
+        '</div>' +
+        '<div class="' + (tx.type==='credit'?'credit-positive':'credit-negative') + '">' + (tx.type==='credit'?'+':'−') + '₹' + tx.amount + '</div>' +
+      '</div>'
+    ).join('');
+  }
+
+  const sel = document.getElementById('led-player');
+  const curVal = sel.value;
+  sel.innerHTML = '<option value="">Select player...</option>' +
+    players.map(p => '<option value="' + p.id + '">' + p.name + ' — ' + (ledger[p.id].balance>=0?'':'−') + '₹' + Math.abs(ledger[p.id].balance) + '</option>').join('');
+  if (curVal) sel.value = curVal;
+}
+
+function openLedgerFor(id) {
+  showSection('ledger', null);
+  switchTab('led-topup', document.querySelectorAll('#sec-ledger .tab')[1], 'led');
+  setTimeout(() => { document.getElementById('led-player').value = id; }, 50);
+}
+
+function ledNotif(msg, success=true) {
+  const n = document.getElementById('led-notif');
+  n.textContent = msg;
+  n.className = 'notification ' + (success ? 'notif-success' : 'notif-info');
+  n.style.display = 'block';
+  setTimeout(() => n.style.display = 'none', 2200);
+}
+
+</script>
+
+<!-- LEDGER -->
+<div id="sec-ledger" class="section">
+  <div class="grid2" style="margin-bottom:1rem;">
+    <div class="card" style="padding:0.85rem;"><div class="label">Total credits held</div><div class="metric" id="led-total" style="color:#2d7a3a;">₹0</div></div>
+    <div class="card" style="padding:0.85rem;"><div class="label">Players in debt</div><div class="metric" id="led-debt" style="color:#c0392b;">0</div></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('led-balances',this,'led')">Balances</button>
+    <button class="tab" onclick="switchTab('led-topup',this,'led')">Top up</button>
+    <button class="tab" onclick="switchTab('led-history',this,'led')">History</button>
+  </div>
+  <div class="notification notif-success" id="led-notif"></div>
+  <div id="led-tab-led-balances">
+    <div class="card"><div class="section-title">Player credit balances</div><div id="led-balance-list"></div></div>
+  </div>
+  <div id="led-tab-led-topup" style="display:none;">
+    <div class="card">
+      <div class="section-title">Add or deduct credit</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:12px;color:#888;margin-bottom:5px;">Player</div>
+        <select id="led-player"></select>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:12px;color:#888;margin-bottom:6px;">Quick amounts</div>
+        <div class="topup-presets">
+          <button class="preset-btn" onclick="selectPreset(100)">₹100</button>
+          <button class="preset-btn" onclick="selectPreset(200)">₹200</button>
+          <button class="preset-btn" onclick="selectPreset(400)">₹400 (4 matches)</button>
+          <button class="preset-btn" onclick="selectPreset(500)">₹500</button>
+          <button class="preset-btn" onclick="selectPreset(1000)">₹1,000</button>
+        </div>
+        <input type="number" id="led-amount" placeholder="Or enter custom amount" min="1">
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;color:#888;margin-bottom:5px;">Note (optional)</div>
+        <input type="text" id="led-note" placeholder="e.g. Paid for 4 matches via UPI">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-primary" onclick="ledgerCredit()">+ Add credit</button>
+        <button class="btn-secondary" onclick="ledgerDebit()">− Deduct</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Bulk top up — all players</div>
+      <div style="font-size:13px;color:#888;margin-bottom:12px;">Add the same amount to every player at once.</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        <div style="flex:1;min-width:100px;">
+          <div style="font-size:12px;color:#888;margin-bottom:5px;">Amount each</div>
+          <input type="number" id="led-bulk-amt" placeholder="e.g. 400">
+        </div>
+        <div style="flex:2;min-width:140px;">
+          <div style="font-size:12px;color:#888;margin-bottom:5px;">Note</div>
+          <input type="text" id="led-bulk-note" placeholder="e.g. 4 match advance">
+        </div>
+        <button class="btn-primary" onclick="ledgerBulk()">Top up all</button>
+      </div>
+    </div>
+  </div>
+  <div id="led-tab-led-history" style="display:none;">
+    <div class="card"><div class="section-title">Transaction history</div><div id="led-history-list"></div></div>
+  </div>
+</div>
+
+<script>initLedger(); refreshLedger();</script>
+</body>
+</html>
