@@ -104,6 +104,8 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 .btn-icon { padding:5px 10px; border-radius:8px; border:0.5px solid #2e2e2e; background:transparent; cursor:pointer; font-size:12px; color:#666; transition:all 0.15s; }
 .btn-icon:hover { background:#242424; color:#ccc; }
 .btn-icon.danger:hover { background:#2e0d0d; color:#e05555; border-color:#5a1a1a; }
+.absent-chip { display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;border:0.5px solid #2e2e2e;background:transparent;cursor:pointer;font-size:12px;color:#666;transition:all 0.15s;user-select:none; }
+.absent-chip.marked { background:#2e1205;color:#e07a35;border-color:#5a2a10; }
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; padding:1rem; }
 .modal-overlay.open { display:flex; }
 .modal { background:#1a1a1a; border:0.5px solid #2a2a2a; border-radius:16px; padding:1.5rem; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; }
@@ -118,7 +120,11 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 
 <div class="header">
   <h1>🏏 IPL Fantasy Admin</h1>
-  <span>Season 2026</span>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span id="save-indicator" style="font-size:11px;color:#555;">—</span>
+    <button class="btn-secondary btn-sm" onclick="exportBackup()" style="font-size:11px;padding:4px 10px;">⬇ Export</button>
+    <label class="btn-secondary btn-sm" style="font-size:11px;padding:4px 10px;cursor:pointer;">⬆ Import<input type="file" accept=".json" style="display:none;" onchange="importBackup(this)"></label>
+  </div>
 </div>
 
 <div class="nav">
@@ -130,6 +136,7 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
   <button class="nav-btn" onclick="showSection('players',this)">Players</button>
   <button class="nav-btn" onclick="showSection('season',this)">Season</button>
   <button class="nav-btn" onclick="showSection('ledger',this)">Credits</button>
+  <button class="nav-btn" onclick="showSection('settings',this)">⚙️ Settings</button>
 </div>
 
 <!-- DASHBOARD -->
@@ -282,8 +289,8 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
   <div class="notification notif-success" id="pay-notif">Payment status updated</div>
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <div><div style="font-weight:500;" id="pay-match-title">MI vs CSK</div><div class="match-meta" id="pay-match-meta">Today · 7:30 PM · Entry: ₹100</div></div>
-      <span class="badge badge-warning" id="paid-count-badge">6 / 8 paid</span>
+      <div><div style="font-weight:500;" id="pay-match-title">—</div><div class="match-meta" id="pay-match-meta">—</div></div>
+      <span class="badge badge-warning" id="paid-count-badge">—</span>
     </div>
     <div id="payment-list"></div>
     <div style="margin-top:12px;padding-top:12px;border-top:0.5px solid #222;font-size:12px;color:#666;">Tap to toggle: Unpaid → Paid → Debt</div>
@@ -312,11 +319,7 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
   <div id="entry-mode-ai">
     <div class="card" style="margin-bottom:12px;">
       <div class="section-title">Select match</div>
-      <select id="result-match-select" style="margin-bottom:12px;" onchange="updateResultFeeHint()">
-        <option value="0">MI vs CSK — Today 7:30 PM</option>
-        <option value="1">RCB vs KKR — Mar 23 3:30 PM</option>
-        <option value="2">DC vs SRH — Mar 23 7:30 PM</option>
-      </select>
+      <select id="result-match-select" style="margin-bottom:12px;" onchange="updateResultFeeHint()"></select>
       <div id="result-fee-hint" style="font-size:12px;color:#666;margin-bottom:12px;"></div>
       <div class="section-title">Upload Dream11 screenshot</div>
       <div class="upload-area" onclick="document.getElementById('file-input').click()">
@@ -351,6 +354,11 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
       </div>
       <div style="margin-top:14px;"><div style="font-weight:500;font-size:13px;margin-bottom:8px;">WhatsApp message preview</div>
       <div class="wa-template-box" id="wa-result-msg"></div></div>
+      <!-- Absent players section -->
+      <div style="margin-top:14px;">
+        <div style="font-weight:500;font-size:13px;margin-bottom:6px;">👤 Absent players <span style="font-size:12px;font-weight:400;color:#666;">(did not participate)</span></div>
+        <div id="ai-absent-list" style="display:flex;flex-wrap:wrap;gap:8px;min-height:28px;"></div>
+      </div>
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
         <button class="btn-primary" onclick="confirmResults()">Confirm & save</button>
         <button class="btn-secondary" onclick="copyResultMsg()">Copy message</button>
@@ -363,11 +371,7 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
   <div id="entry-mode-manual" style="display:none;">
     <div class="card" style="margin-bottom:12px;">
       <div class="section-title">Select match</div>
-      <select id="manual-match-select" style="margin-bottom:12px;" onchange="updateManualFeeHint()">
-        <option value="0">MI vs CSK — Today 7:30 PM</option>
-        <option value="1">RCB vs KKR — Mar 23 3:30 PM</option>
-        <option value="2">DC vs SRH — Mar 23 7:30 PM</option>
-      </select>
+      <select id="manual-match-select" style="margin-bottom:12px;" onchange="updateManualFeeHint()"></select>
       <div id="manual-fee-hint" style="font-size:12px;color:#666;margin-bottom:4px;"></div>
     </div>
     <div class="card" style="margin-bottom:12px;">
@@ -411,6 +415,11 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
       </div>
       <div style="margin-top:14px;"><div style="font-weight:500;font-size:13px;margin-bottom:8px;">WhatsApp message preview</div>
       <div class="wa-template-box" id="manual-wa-msg"></div></div>
+      <!-- Absent players section -->
+      <div style="margin-top:14px;">
+        <div style="font-weight:500;font-size:13px;margin-bottom:6px;">👤 Absent players <span style="font-size:12px;font-weight:400;color:#666;">(did not participate)</span></div>
+        <div id="manual-absent-list" style="display:flex;flex-wrap:wrap;gap:8px;min-height:28px;"></div>
+      </div>
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
         <button class="btn-primary" onclick="confirmManualResults()">Confirm & save</button>
         <button class="btn-secondary" onclick="copyManualMsg()">Copy message</button>
@@ -475,44 +484,54 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
     <button class="tab" onclick="switchTab('wa-templates',this,'wa')">Templates</button>
     <button class="tab" onclick="switchTab('wa-players',this,'wa')">Recipients</button>
   </div>
+
+  <!-- REMINDERS TAB -->
   <div id="wa-tab-wa-reminders">
-    <div class="card">
-      <div class="section-title">Automated reminders · MI vs CSK today</div>
-      <div class="reminder-item"><div><div style="font-size:14px;font-weight:500;">Morning reminder</div><div style="font-size:12px;color:#666;">Sent at 10:00 AM on match day</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-success" id="r1-status">Sent</span><div class="toggle on" id="t1" onclick="toggleReminder('t1','r1-status')"></div></div></div>
-      <div class="reminder-item"><div><div style="font-size:14px;font-weight:500;">2 hours before</div><div style="font-size:12px;color:#666;">Sent at 5:30 PM · deadline reminder</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-warning" id="r2-status">Pending</span><div class="toggle on" id="t2" onclick="toggleReminder('t2','r2-status')"></div></div></div>
-      <div class="reminder-item"><div><div style="font-size:14px;font-weight:500;">Final warning</div><div style="font-size:12px;color:#666;">30 mins before toss — unpaid only</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-info" id="r3-status">Scheduled</span><div class="toggle on" id="t3" onclick="toggleReminder('t3','r3-status')"></div></div></div>
+    <div class="card" id="wa-api-status-card" style="margin-bottom:10px;display:none;">
+      <div style="font-size:13px;" id="wa-api-status-msg"></div>
     </div>
     <div class="card">
-      <div class="section-title">Send manual message now</div>
-      <div style="margin-bottom:12px;"><textarea id="manual-msg">⚠️ MI vs CSK tonight at 7:30 PM!
-Pay ₹100 to [UPI] before 6:30 PM.
-Pick your Dream11 team before toss! 🏏</textarea></div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn-green" onclick="sendManualMsg()">Send to all players</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="section-title" style="margin:0;">Next match reminders</div>
+        <span class="badge badge-info" id="wa-next-match-badge">—</span>
+      </div>
+      <div id="wa-reminders-list"></div>
+    </div>
+    <div class="card" style="margin-top:10px;">
+      <div class="section-title">Send custom message</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:12px;color:#666;margin-bottom:5px;">Select player</div>
+        <select id="wa-send-player" style="margin-bottom:10px;"></select>
+      </div>
+      <div style="margin-bottom:12px;"><textarea id="manual-msg" style="min-height:90px;"></textarea></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-green" onclick="sendManualMsg()">Send via WhatsApp</button>
         <button class="btn-secondary" onclick="previewMsg()">Preview</button>
       </div>
-      <div id="manual-preview" style="display:none;margin-top:12px;"><div style="font-size:12px;color:#666;margin-bottom:6px;">Preview</div><div class="wa-template-box" id="manual-preview-text"></div></div>
+      <div id="manual-preview" style="display:none;margin-top:12px;">
+        <div style="font-size:12px;color:#666;margin-bottom:6px;">Preview</div>
+        <div class="wa-template-box" id="manual-preview-text"></div>
+      </div>
+      <div class="notification notif-info" id="wa-send-notif" style="margin-top:10px;"></div>
     </div>
   </div>
+
+  <!-- TEMPLATES TAB -->
   <div id="wa-tab-wa-templates" style="display:none;">
-    <div class="card"><div class="section-title">Morning reminder</div><div style="margin-bottom:8px;"><textarea id="tpl-morning">🏏 Match day! {team1} vs {team2}
-📅 {date} · {time}
-💰 Entry: ₹{fee} — pay to [your UPI]
-⏰ Deadline: {deadline}
-Pick your Dream11 team before toss!</textarea></div><button class="btn-secondary btn-sm" onclick="saveTpl()">Save</button></div>
-    <div class="card"><div class="section-title">Final warning</div><div style="margin-bottom:8px;"><textarea id="tpl-final">⚠️ Last chance! {team1} vs {team2} starts in 30 mins.
-Unpaid: {unpaid_players}
-Pay now or you'll be marked as debt 📋</textarea></div><button class="btn-secondary btn-sm" onclick="saveTpl()">Save</button></div>
-    <div class="card"><div class="section-title">Results</div><div style="margin-bottom:8px;"><textarea id="tpl-results">🏆 {team1} vs {team2} Results!
-🥇 {winner1} — {pts1} pts → +₹{prize1}
-🥈 {winner2} — {pts2} pts → +₹{prize2}
-Better luck next match! 💪</textarea></div><button class="btn-secondary btn-sm" onclick="saveTpl()">Save</button></div>
+    <div class="card"><div class="section-title">Morning reminder</div><div style="margin-bottom:8px;"><textarea id="tpl-morning"></textarea></div><button class="btn-secondary btn-sm" onclick="saveTpl('morning')">Save</button></div>
+    <div class="card"><div class="section-title">Final warning</div><div style="margin-bottom:8px;"><textarea id="tpl-final"></textarea></div><button class="btn-secondary btn-sm" onclick="saveTpl('final')">Save</button></div>
+    <div class="card"><div class="section-title">Results</div><div style="margin-bottom:8px;"><textarea id="tpl-results"></textarea></div><button class="btn-secondary btn-sm" onclick="saveTpl('results')">Save</button></div>
   </div>
+
+  <!-- RECIPIENTS TAB -->
   <div id="wa-tab-wa-players" style="display:none;">
-    <div class="card"><div class="section-title">Player WhatsApp numbers</div><div id="wa-player-list"></div><div style="margin-top:12px;padding-top:12px;border-top:0.5px solid #222;font-size:12px;color:#666;">Numbers used to generate WhatsApp links.</div></div>
+    <div class="card">
+      <div class="section-title">Player WhatsApp numbers</div>
+      <div id="wa-player-list"></div>
+      <div style="margin-top:12px;padding-top:12px;border-top:0.5px solid #222;font-size:12px;color:#666;">Format: 91XXXXXXXXXX (country code + number, no + or spaces)</div>
+    </div>
   </div>
 </div>
-
 <!-- PLAYERS -->
 <div id="sec-players" class="section">
   <div class="card">
@@ -610,7 +629,7 @@ function selectFeePreset(idx, fee) {
 function saveFee(idx) {
   const custom = document.getElementById('fee-custom-'+idx).value;
   if(custom && parseInt(custom)>0) iplSchedule[idx].fee = parseInt(custom);
-  renderMatches(); renderDashUpcoming(); updateResultFeeHint();
+  renderMatches(); renderDashUpcoming(); updateResultFeeHint(); saveState();
   const p = document.getElementById('fee-panel-'+idx);
   if(p) p.classList.remove('open');
 }
@@ -723,7 +742,7 @@ function renderDashboard() {
 
   // Row 6: win rate
   const winRateData = [...seasonStats]
-    .map(p => ({ ...p, rate: played > 0 ? Math.round(p.wins/played*100) : 0 }))
+    .map(p => ({ ...p, rate: (p.matchesPlayed||0) > 0 ? Math.round(p.wins/(p.matchesPlayed||1)*100) : 0 }))
     .sort((a,b) => b.wins - a.wins || b.earned - a.earned);
   document.getElementById('dash-winrate-list').innerHTML = winRateData.length === 0
     ? '<div style="text-align:center;padding:1.5rem;font-size:13px;color:#666;">Add players to see win rates.</div>'
@@ -869,6 +888,7 @@ function togglePayment(matchIdx, id) {
   const cur = matchPayments[matchIdx][id];
   matchPayments[matchIdx][id] = !cur?true:cur===true?'debt':false;
   renderPayments();
+  saveState();
   const n = document.getElementById('pay-notif');
   n.style.display='block';
   setTimeout(()=>n.style.display='none',1800);
@@ -893,6 +913,7 @@ async function handleScreenshot(input) {
     const mediaType = file.type;
     document.getElementById('ai-loading-card').style.display='block';
     document.getElementById('result-preview').style.display='none';
+    window._aiAbsentIds = []; // reset absences for new upload
     const notif = document.getElementById('ai-notif');
     notif.className='notification notif-info';
     notif.textContent='Claude AI is reading the leaderboard...';
@@ -930,7 +951,9 @@ async function handleScreenshot(input) {
 function showPayoutPreview(rankings, file, matchFee, matchIdx) {
   document.getElementById('ai-loading-card').style.display='none';
   const m = iplSchedule[matchIdx];
-  const pool = players.length * matchFee;
+  const absentIds = window._aiAbsentIds || [];
+  const participating = players.filter(p => !absentIds.includes(p.id));
+  const pool = participating.length * matchFee;
   const prize1 = Math.round(pool*PRIZE_SPLIT[0]);
   const prize2 = Math.round(pool*PRIZE_SPLIT[1]);
   // Store draft so edit payout panel can update it
@@ -938,11 +961,12 @@ function showPayoutPreview(rankings, file, matchFee, matchIdx) {
     matchIdx, pool, matchFee,
     name1: rankings[0]?.name, pts1: rankings[0]?.points, prize1,
     name2: rankings[1]?.name, pts2: rankings[1]?.points, prize2,
-    waMsg: ''
+    waMsg: '', absentIds: [...absentIds]
   };
   document.getElementById('uploaded-img').src = URL.createObjectURL(file);
+  const absentNote = absentIds.length > 0 ? ` · ${absentIds.length} absent` : '';
   document.getElementById('pool-summary').textContent =
-    `Pool: ₹${pool} (${players.length} × ₹${matchFee}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
+    `Pool: ₹${pool} (${participating.length} × ₹${matchFee}${absentNote}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
   document.getElementById('payout-list').innerHTML = rankings.slice(0,2).map((r,i)=>`
     <div class="payout-row ${i===0?'payout-1':'payout-2'}" style="border-radius:8px;margin-bottom:${i===0?'6px':'0'};">
       <div style="display:flex;align-items:center;gap:10px;">
@@ -952,29 +976,130 @@ function showPayoutPreview(rankings, file, matchFee, matchIdx) {
       </div>
       <div style="font-weight:500;color:${i===0?'#412402':'#666'};">+₹${i===0?prize1:prize2}</div>
     </div>`).join('');
-  const waMsg = `🏏 ${m.teams} Results!\n🥇 ${rankings[0]?.name} — ${rankings[0]?.points} pts → +₹${prize1}\n🥈 ${rankings[1]?.name} — ${rankings[1]?.points} pts → +₹${prize2}\n\nBetter luck next match! 💪`;
+  const waMsg = buildWaMsg(m.teams, rankings[0]?.name, rankings[0]?.points, prize1, rankings[1]?.name, rankings[1]?.points, prize2, absentIds);
   window._aiDraft.waMsg = waMsg;
   document.getElementById('wa-result-msg').textContent = waMsg;
   document.getElementById('ai-payout-edit').style.display = 'none'; // reset edit panel
+  // Render absent chips
+  renderAbsentChips('ai', matchIdx);
   document.getElementById('result-preview').style.display='block';
   document.getElementById('result-preview').scrollIntoView({behavior:'smooth'});
+}
+
+function buildWaMsg(teams, n1, pts1, prize1, n2, pts2, prize2, absentIds) {
+  let msg = `🏏 ${teams} Results!\n🥇 ${n1} — ${pts1} pts → +₹${prize1}\n🥈 ${n2} — ${pts2} pts → +₹${prize2}`;
+  if (absentIds && absentIds.length > 0) {
+    const absentNames = players.filter(p => absentIds.includes(p.id)).map(p => p.name).join(', ');
+    msg += `\n\n🚫 Absent: ${absentNames}`;
+  }
+  msg += `\n\nBetter luck next match! 💪`;
+  return msg;
+}
+
+function renderAbsentChips(mode, matchIdx) {
+  const containerId = mode === 'ai' ? 'ai-absent-list' : 'manual-absent-list';
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const absentIds = mode === 'ai' ? (window._aiAbsentIds || []) : (window._manualAbsentIds || []);
+  if (players.length === 0) {
+    container.innerHTML = '<span style="font-size:12px;color:#555;">No players added yet.</span>';
+    return;
+  }
+  container.innerHTML = players.map(p => {
+    const isAbsent = absentIds.includes(p.id);
+    return `<button class="absent-chip ${isAbsent ? 'marked' : ''}" onclick="toggleAbsent('${mode}',${p.id},${matchIdx})">
+      ${isAbsent ? '🚫' : '✓'} ${p.name}
+    </button>`;
+  }).join('');
+}
+
+function toggleAbsent(mode, playerId, matchIdx) {
+  const key = mode === 'ai' ? '_aiAbsentIds' : '_manualAbsentIds';
+  if (!window[key]) window[key] = [];
+  const idx = window[key].indexOf(playerId);
+  if (idx === -1) window[key].push(playerId);
+  else window[key].splice(idx, 1);
+
+  // Recalculate pool and update draft + UI
+  const absentIds = window[key];
+  const participating = players.filter(p => !absentIds.includes(p.id));
+
+  if (mode === 'ai' && window._aiDraft) {
+    const d = window._aiDraft;
+    const m = iplSchedule[d.matchIdx];
+    const pool = participating.length * d.matchFee;
+    const prize1 = Math.round(pool * PRIZE_SPLIT[0]);
+    const prize2 = Math.round(pool * PRIZE_SPLIT[1]);
+    d.pool = pool; d.prize1 = prize1; d.prize2 = prize2; d.absentIds = [...absentIds];
+    const absentNote = absentIds.length > 0 ? ` · ${absentIds.length} absent` : '';
+    document.getElementById('pool-summary').textContent =
+      `Pool: ₹${pool} (${participating.length} × ₹${d.matchFee}${absentNote}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
+    document.getElementById('payout-list').querySelectorAll('.payout-row').forEach((row, i) => {
+      row.querySelector('div[style*="font-weight:500;color"]').textContent = '+₹' + (i===0?prize1:prize2);
+    });
+    const waMsg = buildWaMsg(m.teams, d.name1, d.pts1, prize1, d.name2, d.pts2, prize2, absentIds);
+    d.waMsg = waMsg;
+    document.getElementById('wa-result-msg').textContent = waMsg;
+  }
+  if (mode === 'manual' && window._manualDraft) {
+    const d = window._manualDraft;
+    const m = iplSchedule[d.matchIdx];
+    const pool = participating.length * m.fee;
+    const prize1 = Math.round(pool * PRIZE_SPLIT[0]);
+    const prize2 = Math.round(pool * PRIZE_SPLIT[1]);
+    d.pool = pool; d.prize1 = prize1; d.prize2 = prize2; d.absentIds = [...absentIds];
+    const absentNote = absentIds.length > 0 ? ` · ${absentIds.length} absent` : '';
+    document.getElementById('manual-pool-summary').textContent =
+      `Pool: ₹${pool} (${participating.length} × ₹${m.fee}${absentNote}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
+    document.getElementById('manual-payout-list').querySelectorAll('.payout-row').forEach((row, i) => {
+      row.querySelector('div[style*="font-weight:500;color"]').textContent = '+₹' + (i===0?prize1:prize2);
+    });
+    const waMsg = buildWaMsg(m.teams, d.name1, d.pts1, prize1, d.name2, d.pts2, prize2, absentIds);
+    d.waMsg = waMsg;
+    document.getElementById('manual-wa-msg').textContent = waMsg;
+  }
+  renderAbsentChips(mode, matchIdx);
 }
 
 function confirmResults() {
   const d = window._aiDraft;
   if(d) {
     const m = iplSchedule[d.matchIdx];
+    const absentIds = d.absentIds || [];
+    const participating = players.filter(p => !absentIds.includes(p.id));
     const w = seasonStats.find(p=>p.name===d.name1);
     const s = seasonStats.find(p=>p.name===d.name2);
     if(w){w.wins++;w.earned+=d.prize1;}
     if(s){s.earned+=d.prize2;}
+    // Increment matchesPlayed for all non-absent players
+    seasonStats.forEach(p => {
+      if(!absentIds.includes(p.id)) p.matchesPlayed = (p.matchesPlayed||0) + 1;
+    });
+    // Update ledger: debit entry fee from all participants, credit prizes to winners
+    initLedger();
+    participating.forEach(p => {
+      ledger[p.id].balance -= d.matchFee;
+      ledger[p.id].transactions.unshift({ type:'debit', amount:d.matchFee, note:`Entry fee — ${m.teams}`, date:todayStr() });
+    });
+    const winner = players.find(p=>p.name===d.name1);
+    const second = players.find(p=>p.name===d.name2);
+    if(winner) {
+      ledger[winner.id].balance += d.prize1;
+      ledger[winner.id].transactions.unshift({ type:'credit', amount:d.prize1, note:`🥇 1st place — ${m.teams}`, date:todayStr() });
+    }
+    if(second) {
+      ledger[second.id].balance += d.prize2;
+      ledger[second.id].transactions.unshift({ type:'credit', amount:d.prize2, note:`🥈 2nd place — ${m.teams}`, date:todayStr() });
+    }
     savedResults.unshift({
       matchName: m.teams, date: m.date,
       rank1: { name:d.name1, pts:d.pts1, prize:d.prize1 },
       rank2: { name:d.name2, pts:d.pts2, prize:d.prize2 },
-      pool: d.pool, savedAt: todayStr()
+      pool: d.pool, savedAt: todayStr(),
+      absentIds, participantCount: participating.length
     });
     window._aiDraft = null;
+    window._aiAbsentIds = [];
   } else if(aiResults && aiResults.rankings.length>=2) {
     // fallback for old flow
     const pool = players.length * aiResults.matchFee;
@@ -985,11 +1110,27 @@ function confirmResults() {
     const s = seasonStats.find(p=>p.name===aiResults.rankings[1].name);
     if(w){w.wins++;w.earned+=prize1;}
     if(s){s.earned+=prize2;}
+    seasonStats.forEach(p => { p.matchesPlayed = (p.matchesPlayed||0) + 1; });
+    initLedger();
+    players.forEach(p => {
+      ledger[p.id].balance -= aiResults.matchFee;
+      ledger[p.id].transactions.unshift({ type:'debit', amount:aiResults.matchFee, note:`Entry fee — ${m.teams}`, date:todayStr() });
+    });
+    const winner = players.find(p=>p.name===aiResults.rankings[0].name);
+    const second = players.find(p=>p.name===aiResults.rankings[1].name);
+    if(winner) {
+      ledger[winner.id].balance += prize1;
+      ledger[winner.id].transactions.unshift({ type:'credit', amount:prize1, note:`🥇 1st place — ${m.teams}`, date:todayStr() });
+    }
+    if(second) {
+      ledger[second.id].balance += prize2;
+      ledger[second.id].transactions.unshift({ type:'credit', amount:prize2, note:`🥈 2nd place — ${m.teams}`, date:todayStr() });
+    }
     savedResults.unshift({
       matchName: m.teams, date: m.date,
       rank1: { name:aiResults.rankings[0].name, pts:aiResults.rankings[0].points, prize:prize1 },
       rank2: { name:aiResults.rankings[1].name, pts:aiResults.rankings[1].points, prize:prize2 },
-      pool, savedAt: todayStr()
+      pool, savedAt: todayStr(), absentIds: [], participantCount: players.length
     });
   }
   document.getElementById('result-preview').style.display='none';
@@ -1000,6 +1141,8 @@ function confirmResults() {
   setTimeout(()=>notif.style.display='none',2500);
   aiResults = null;
   renderSeason();
+  refreshLedger();
+  saveState();
 }
 
 function copyResultMsg() {
@@ -1063,16 +1206,23 @@ function renderSeason() {
     return;
   }
   const sorted = [...seasonStats].sort((a,b)=>b.earned-a.earned);
-  document.getElementById('season-list').innerHTML = sorted.map((p,i)=>`
+  document.getElementById('season-list').innerHTML = sorted.map((p,i)=>{
+    const played = p.matchesPlayed || 0;
+    const winRate = played > 0 ? Math.round(p.wins / played * 100) : 0;
+    const absentCount = savedResults.filter(r => (r.absentIds||[]).includes(p.id)).length;
+    return `
     <div class="season-row">
       <div class="rank-badge ${i===0?'rank-1':'rank-2'}">${i+1}</div>
       <div class="avatar">${p.initials}</div>
-      <div style="flex:1;"><div style="font-size:14px;font-weight:500;">${p.name}</div><div style="font-size:12px;color:#666;">${p.wins} win${p.wins!==1?'s':''} · Paid ₹${p.paid}</div></div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:500;">${p.name}</div>
+        <div style="font-size:12px;color:#666;">${p.wins}W · ${played} played${absentCount>0?' · <span style="color:#e07a35;">'+absentCount+' absent</span>':''} · ${winRate}% win rate</div>
+      </div>
       <div style="text-align:right;">
         <div style="font-weight:500;color:${p.earned>0?'#4caf72':'#666'};">+₹${p.earned}</div>
         <div style="font-size:12px;color:#666;">net ${p.earned-p.paid>=0?'+':''}₹${p.earned-p.paid}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function toggleAddPlayer() {
@@ -1088,18 +1238,20 @@ function addPlayer() {
   const initials=name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
   const id = Date.now();
   players.push({id,name,dream11:d11||name.toLowerCase()+'_d11',initials,phone:phone||''});
-  seasonStats.push({id,name,initials,wins:0,earned:0,paid:0});
+  seasonStats.push({id,name,initials,wins:0,earned:0,paid:0,matchesPlayed:0});
   initLedger();
   document.getElementById('new-name').value='';
   document.getElementById('new-dream11').value='';
   document.getElementById('new-phone').value='';
   toggleAddPlayer(); renderPlayers();
+  saveState();
 }
 
 function removePlayer(id){
   players=players.filter(p=>p.id!==id);
   seasonStats=seasonStats.filter(p=>p.id!==id);
   renderPlayers();
+  saveState();
 }
 
 function editPlayer(id) {
@@ -1132,9 +1284,10 @@ function showSection(id,btn) {
   if(id==='matches') renderMatches();
   if(id==='payments') renderPayments();
   if(id==='season') renderSeason();
-  if(id==='whatsapp') renderWaPlayers();
+  if(id==='whatsapp') { renderWaReminders(); renderWaPlayers(); }
+  if(id==='settings') renderSettingsForm();
   if(id==='ledger') refreshLedger();
-  if(id==='results') { updateResultFeeHint(); updateManualFeeHint(); populateManualPlayerDropdowns(); }
+  if(id==='results') { populateResultMatchDropdowns(); updateResultFeeHint(); updateManualFeeHint(); populateManualPlayerDropdowns(); }
 }
 
 function switchTab(tab,btn,group) {
@@ -1157,7 +1310,97 @@ function initLedger() {
   players.forEach(p => { if (!ledger[p.id]) ledger[p.id] = { balance:0, transactions:[] }; });
 }
 
-renderDashboard(); renderMatches(); renderPayments(); renderPlayers(); renderSeason(); updateResultFeeHint(); updateManualFeeHint();
+// == PERSISTENCE ==
+const SAVE_KEY = 'ipl_fantasy_2026';
+
+function saveState() {
+  const state = {
+    players, matchPayments, savedResults, seasonStats, ledger,
+    iplScheduleFees: iplSchedule.map(m => m.fee),
+    savedAt: new Date().toISOString()
+  };
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    const el = document.getElementById('save-indicator');
+    if (el) {
+      const t = new Date();
+      el.textContent = 'Saved ' + t.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+      el.style.color = '#4caf72';
+      setTimeout(() => { el.style.color = '#555'; }, 2000);
+    }
+  } catch(e) { console.warn('Save failed:', e); }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (state.players) players = state.players;
+    if (state.matchPayments) matchPayments = state.matchPayments;
+    if (state.savedResults) savedResults = state.savedResults;
+    if (state.seasonStats) seasonStats = state.seasonStats;
+    if (state.ledger) ledger = state.ledger;
+    if (state.iplScheduleFees) state.iplScheduleFees.forEach((fee, i) => { if (iplSchedule[i]) iplSchedule[i].fee = fee; });
+    const el = document.getElementById('save-indicator');
+    if (el && state.savedAt) {
+      const d = new Date(state.savedAt);
+      el.textContent = 'Last saved ' + d.toLocaleDateString('en-IN', {day:'numeric', month:'short'}) + ' ' + d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    }
+    return true;
+  } catch(e) { console.warn('Load failed:', e); return false; }
+}
+
+function exportBackup() {
+  const state = {
+    players, matchPayments, savedResults, seasonStats, ledger,
+    iplScheduleFees: iplSchedule.map(m => m.fee),
+    exportedAt: new Date().toISOString(), version: 1
+  };
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  a.href = url;
+  a.download = 'ipl-fantasy-backup-' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '-' + String(d.getHours()).padStart(2,'0') + String(d.getMinutes()).padStart(2,'0') + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const state = JSON.parse(e.target.result);
+      if (!state.players || !state.savedResults) { alert('Invalid backup file.'); return; }
+      if (state.players) players = state.players;
+      if (state.matchPayments) matchPayments = state.matchPayments;
+      if (state.savedResults) savedResults = state.savedResults;
+      if (state.seasonStats) seasonStats = state.seasonStats;
+      if (state.ledger) ledger = state.ledger;
+      if (state.iplScheduleFees) state.iplScheduleFees.forEach((fee, i) => { if (iplSchedule[i]) iplSchedule[i].fee = fee; });
+      saveState();
+      renderAll();
+      alert('Backup restored successfully!');
+    } catch(e) { alert('Failed to read backup file.'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function renderAll() {
+  renderDashboard(); renderMatches(); renderPayments(); renderPlayers();
+  renderSeason(); populateResultMatchDropdowns(); updateResultFeeHint();
+  updateManualFeeHint(); initLedger(); refreshLedger(); renderWaReminders();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadSettings();
+  loadState();
+  renderAll();
+});
 
 function selectPreset(amt) {
   ledgerPreset = amt;
@@ -1175,7 +1418,7 @@ function ledgerCredit() {
   initLedger();
   ledger[pid].balance += amt;
   ledger[pid].transactions.unshift({ type:'credit', amount:amt, note, date:todayStr() });
-  resetLedgerForm(); refreshLedger();
+  resetLedgerForm(); refreshLedger(); saveState();
   ledNotif('₹' + amt + ' credited to ' + players.find(p=>p.id===pid)?.name);
 }
 
@@ -1187,7 +1430,7 @@ function ledgerDebit() {
   initLedger();
   ledger[pid].balance -= amt;
   ledger[pid].transactions.unshift({ type:'debit', amount:amt, note, date:todayStr() });
-  resetLedgerForm(); refreshLedger();
+  resetLedgerForm(); refreshLedger(); saveState();
   ledNotif('₹' + amt + ' deducted from ' + players.find(p=>p.id===pid)?.name);
 }
 
@@ -1202,7 +1445,7 @@ function ledgerBulk() {
   });
   document.getElementById('led-bulk-amt').value = '';
   document.getElementById('led-bulk-note').value = '';
-  refreshLedger();
+  refreshLedger(); saveState();
   ledNotif('₹' + amt + ' credited to all ' + players.length + ' players');
 }
 
@@ -1323,7 +1566,7 @@ function applyPayoutEdit(mode) {
     window._manualDraft.waMsg = waMsg;
     document.getElementById('manual-wa-msg').textContent = waMsg;
     document.getElementById('manual-pool-summary').textContent =
-      `Pool: ₹${d.pool} (${players.length} × ₹${m.fee}) · 1st: ₹${prize1} (custom) · 2nd: ₹${prize2} (custom)`;
+      `Pool: ₹${d.pool} · 1st: ₹${prize1} (custom) · 2nd: ₹${prize2} (custom)`;
   } else if (mode === 'ai' && window._aiDraft) {
     const prize1 = parseInt(document.getElementById('ai-edit-prize1').value) || 0;
     const prize2 = parseInt(document.getElementById('ai-edit-prize2').value) || 0;
@@ -1350,7 +1593,7 @@ function applyPayoutEdit(mode) {
     window._aiDraft.waMsg = waMsg;
     document.getElementById('wa-result-msg').textContent = waMsg;
     document.getElementById('pool-summary').textContent =
-      `Pool: ₹${d.pool} (${players.length} × ₹${m.fee}) · 1st: ₹${prize1} (custom) · 2nd: ₹${prize2} (custom)`;
+      `Pool: ₹${d.pool} · 1st: ₹${prize1} (custom) · 2nd: ₹${prize2} (custom)`;
   }
   togglePayoutEdit(mode);
 }
@@ -1363,6 +1606,14 @@ function switchEntryMode(mode, btn) {
   if(mode==='manual') populateManualPlayerDropdowns();
 }
 
+function populateResultMatchDropdowns() {
+  const opts = iplSchedule.map((m, i) =>
+    `<option value="${i}">${m.teams} — ${m.date} ${m.time}</option>`
+  ).join('');
+  document.getElementById('result-match-select').innerHTML = opts;
+  document.getElementById('manual-match-select').innerHTML = opts;
+}
+
 function populateManualPlayerDropdowns() {
   const opts = '<option value="">Select player...</option>' + players.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
   document.getElementById('manual-rank1-player').innerHTML = opts;
@@ -1372,6 +1623,7 @@ function populateManualPlayerDropdowns() {
 function updateManualFeeHint() {
   const idx = parseInt(document.getElementById('manual-match-select').value);
   const m = iplSchedule[idx];
+  window._manualAbsentIds = []; // reset absences when match changes
   const pool = players.length * m.fee;
   document.getElementById('manual-fee-hint').textContent =
     `Entry fee: ₹${m.fee} · Pool: ₹${pool} · 1st: ₹${Math.round(pool*PRIZE_SPLIT[0])} · 2nd: ₹${Math.round(pool*PRIZE_SPLIT[1])}`;
@@ -1382,7 +1634,9 @@ function updateManualPrizes() { /* live hint — nothing needed, preview button 
 function previewManualResults() {
   const idx = parseInt(document.getElementById('manual-match-select').value);
   const m = iplSchedule[idx];
-  const pool = players.length * m.fee;
+  const absentIds = window._manualAbsentIds || [];
+  const participating = players.filter(p => !absentIds.includes(p.id));
+  const pool = participating.length * m.fee;
   const prize1 = Math.round(pool * PRIZE_SPLIT[0]);
   const prize2 = Math.round(pool * PRIZE_SPLIT[1]);
   const name1 = document.getElementById('manual-rank1-player').value;
@@ -1391,8 +1645,9 @@ function previewManualResults() {
   const pts2  = parseInt(document.getElementById('manual-rank2-pts').value) || 0;
   if(!name1 || !name2) { alert('Please select players for 1st and 2nd place.'); return; }
   if(name1 === name2)  { alert('1st and 2nd place cannot be the same player.'); return; }
+  const absentNote = absentIds.length > 0 ? ` · ${absentIds.length} absent` : '';
   document.getElementById('manual-pool-summary').textContent =
-    `Pool: ₹${pool} (${players.length} × ₹${m.fee}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
+    `Pool: ₹${pool} (${participating.length} × ₹${m.fee}${absentNote}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
   document.getElementById('manual-payout-list').innerHTML = `
     <div class="payout-row payout-1" style="border-radius:8px;margin-bottom:6px;">
       <div style="display:flex;align-items:center;gap:10px;">
@@ -1408,30 +1663,56 @@ function previewManualResults() {
       </div>
       <div style="font-weight:500;color:#666;">+₹${prize2}</div>
     </div>`;
-  const waMsg = `🏏 ${m.teams} Results!\n🥇 ${name1} — ${pts1} pts → +₹${prize1}\n🥈 ${name2} — ${pts2} pts → +₹${prize2}\n\nBetter luck next match! 💪`;
+  const waMsg = buildWaMsg(m.teams, name1, pts1, prize1, name2, pts2, prize2, absentIds);
   document.getElementById('manual-wa-msg').textContent = waMsg;
   document.getElementById('manual-preview-card').style.display = 'block';
   document.getElementById('manual-preview-card').scrollIntoView({behavior:'smooth'});
   // stash for confirm
-  window._manualDraft = { matchIdx:idx, name1, pts1, prize1, name2, pts2, prize2, pool, waMsg };
+  window._manualDraft = { matchIdx:idx, name1, pts1, prize1, name2, pts2, prize2, pool, waMsg, absentIds:[...absentIds] };
+  // Render absent chips
+  renderAbsentChips('manual', idx);
 }
 
 function confirmManualResults() {
   const d = window._manualDraft;
   if(!d) return;
   const m = iplSchedule[d.matchIdx];
+  const absentIds = d.absentIds || [];
+  const participating = players.filter(p => !absentIds.includes(p.id));
   const w = seasonStats.find(p=>p.name===d.name1);
   const s = seasonStats.find(p=>p.name===d.name2);
   if(w){ w.wins++; w.earned+=d.prize1; }
   if(s){ s.earned+=d.prize2; }
+  // Increment matchesPlayed for all non-absent players
+  seasonStats.forEach(p => {
+    if(!absentIds.includes(p.id)) p.matchesPlayed = (p.matchesPlayed||0) + 1;
+  });
+  // Update ledger: debit entry fee from all participants, credit prizes to winners
+  initLedger();
+  participating.forEach(p => {
+    ledger[p.id].balance -= m.fee;
+    ledger[p.id].transactions.unshift({ type:'debit', amount:m.fee, note:`Entry fee — ${m.teams}`, date:todayStr() });
+  });
+  const winner = players.find(p=>p.name===d.name1);
+  const second = players.find(p=>p.name===d.name2);
+  if(winner) {
+    ledger[winner.id].balance += d.prize1;
+    ledger[winner.id].transactions.unshift({ type:'credit', amount:d.prize1, note:`🥇 1st place — ${m.teams}`, date:todayStr() });
+  }
+  if(second) {
+    ledger[second.id].balance += d.prize2;
+    ledger[second.id].transactions.unshift({ type:'credit', amount:d.prize2, note:`🥈 2nd place — ${m.teams}`, date:todayStr() });
+  }
   savedResults.unshift({
     matchName: m.teams, date: m.date,
     rank1: { name:d.name1, pts:d.pts1, prize:d.prize1 },
     rank2: { name:d.name2, pts:d.pts2, prize:d.prize2 },
-    pool: d.pool, savedAt: todayStr()
+    pool: d.pool, savedAt: todayStr(),
+    absentIds, participantCount: participating.length
   });
   document.getElementById('manual-preview-card').style.display = 'none';
   window._manualDraft = null;
+  window._manualAbsentIds = [];
   // reset form
   document.getElementById('manual-rank1-player').value = '';
   document.getElementById('manual-rank1-pts').value = '';
@@ -1442,6 +1723,9 @@ function confirmManualResults() {
   notif.className = 'notification notif-success';
   notif.style.display = 'block';
   setTimeout(()=>notif.style.display='none', 2500);
+  renderSeason();
+  refreshLedger();
+  saveState();
 }
 
 function copyManualMsg() {
@@ -1467,16 +1751,22 @@ function renderPastResults() {
   const empty = document.getElementById('no-past-results');
   if(savedResults.length===0){ container.innerHTML=''; empty.style.display='block'; return; }
   empty.style.display='none';
-  container.innerHTML = savedResults.map((r,i)=>`
+  container.innerHTML = savedResults.map((r,i)=>{
+    const absentNames = (r.absentIds||[]).map(id => players.find(p=>p.id===id)?.name).filter(Boolean);
+    const absentBadge = absentNames.length > 0
+      ? `<span style="font-size:11px;color:#e07a35;margin-left:4px;">· 🚫 ${absentNames.join(', ')} absent</span>`
+      : '';
+    const participantStr = r.participantCount ? `${r.participantCount} players` : 'all players';
+    return `
     <div class="result-card">
       <div class="result-card-header">
         <div>
           <div style="font-weight:500;font-size:14px;">${r.matchName}</div>
-          <div style="font-size:12px;color:#666;">${r.date} · Pool ₹${r.pool} · Saved ${r.savedAt}</div>
+          <div style="font-size:12px;color:#666;">${r.date} · Pool ₹${r.pool} · ${participantStr} · Saved ${r.savedAt}${absentBadge}</div>
         </div>
         <div class="result-actions">
           <button class="btn-icon" onclick="openEditModal(${i})">✎ Edit</button>
-          <button class="btn-icon danger" onclick="deleteResult(${i})">🗑 Delete</button>
+          <button class="btn-icon danger" data-delete-idx="${i}" onclick="deleteResult(${i}, false)">🗑 Delete</button>
         </div>
       </div>
       <div class="payout-row payout-1" style="border-radius:8px;margin-bottom:6px;">
@@ -1493,7 +1783,8 @@ function renderPastResults() {
         </div>
         <div style="font-weight:500;color:#666;">+₹${r.rank2.prize}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function openEditModal(idx) {
@@ -1521,6 +1812,12 @@ function saveEditedResult() {
   const oldS = seasonStats.find(p=>p.name===old.rank2.name);
   if(oldW){ oldW.wins = Math.max(0, oldW.wins-1); oldW.earned = Math.max(0, oldW.earned-old.rank1.prize); }
   if(oldS){ oldS.earned = Math.max(0, oldS.earned-old.rank2.prize); }
+  // Reverse old ledger prize entries
+  initLedger();
+  const oldWinner = players.find(p=>p.name===old.rank1.name);
+  const oldSecond = players.find(p=>p.name===old.rank2.name);
+  if(oldWinner){ ledger[oldWinner.id].balance -= old.rank1.prize; ledger[oldWinner.id].transactions.unshift({ type:'debit', amount:old.rank1.prize, note:`✏️ Edit reversal — ${old.matchName}`, date:todayStr() }); }
+  if(oldSecond){ ledger[oldSecond.id].balance -= old.rank2.prize; ledger[oldSecond.id].transactions.unshift({ type:'debit', amount:old.rank2.prize, note:`✏️ Edit reversal — ${old.matchName}`, date:todayStr() }); }
   // Apply new values
   const r1name = document.getElementById('edit-rank1-name').value.trim();
   const r1pts = parseInt(document.getElementById('edit-rank1-pts').value)||0;
@@ -1533,21 +1830,61 @@ function saveEditedResult() {
   const newS = seasonStats.find(p=>p.name===r2name);
   if(newW){ newW.wins++; newW.earned+=prize1; }
   if(newS){ newS.earned+=prize2; }
+  // Apply new ledger prize entries
+  const newWinner = players.find(p=>p.name===r1name);
+  const newSecond = players.find(p=>p.name===r2name);
+  if(newWinner){ ledger[newWinner.id].balance += prize1; ledger[newWinner.id].transactions.unshift({ type:'credit', amount:prize1, note:`🥇 1st place (edited) — ${old.matchName}`, date:todayStr() }); }
+  if(newSecond){ ledger[newSecond.id].balance += prize2; ledger[newSecond.id].transactions.unshift({ type:'credit', amount:prize2, note:`🥈 2nd place (edited) — ${old.matchName}`, date:todayStr() }); }
   closeEditModal();
   renderPastResults();
   renderSeason();
+  refreshLedger();
+  saveState();
 }
 
-function deleteResult(idx) {
-  if(!confirm('Delete this result? Season stats will be reversed.')) return;
+function deleteResult(idx, confirmed) {
+  if(!confirmed) {
+    // Show inline confirmation on the button
+    const btn = document.querySelector(`[data-delete-idx="${idx}"]`);
+    if(btn) {
+      btn.textContent = 'Confirm?';
+      btn.style.background = '#2e0d0d';
+      btn.style.color = '#e05555';
+      btn.style.borderColor = '#5a1a1a';
+      btn.onclick = () => deleteResult(idx, true);
+      setTimeout(() => {
+        // Reset if not confirmed within 3s
+        if(btn) { btn.textContent = '🗑 Delete'; btn.style = ''; btn.onclick = () => deleteResult(idx, false); }
+      }, 3000);
+    }
+    return;
+  }
   const r = savedResults[idx];
   const w = seasonStats.find(p=>p.name===r.rank1.name);
   const s = seasonStats.find(p=>p.name===r.rank2.name);
   if(w){ w.wins = Math.max(0,w.wins-1); w.earned = Math.max(0,w.earned-r.rank1.prize); }
   if(s){ s.earned = Math.max(0,s.earned-r.rank2.prize); }
+  // Reverse ledger: re-credit entry fees to all participants, debit prizes from winners
+  initLedger();
+  const absentIds = r.absentIds || [];
+  players.filter(p => !absentIds.includes(p.id)).forEach(p => {
+    const fee = r.pool / (r.participantCount || players.length);
+    ledger[p.id].balance += Math.round(fee);
+    ledger[p.id].transactions.unshift({ type:'credit', amount:Math.round(fee), note:`🗑 Delete reversal — ${r.matchName}`, date:todayStr() });
+  });
+  const winner = players.find(p=>p.name===r.rank1.name);
+  const second = players.find(p=>p.name===r.rank2.name);
+  if(winner){ ledger[winner.id].balance -= r.rank1.prize; ledger[winner.id].transactions.unshift({ type:'debit', amount:r.rank1.prize, note:`🗑 Delete reversal — ${r.matchName}`, date:todayStr() }); }
+  if(second){ ledger[second.id].balance -= r.rank2.prize; ledger[second.id].transactions.unshift({ type:'debit', amount:r.rank2.prize, note:`🗑 Delete reversal — ${r.matchName}`, date:todayStr() }); }
+  // Reverse matchesPlayed
+  seasonStats.forEach(p => {
+    if(!absentIds.includes(p.id)) p.matchesPlayed = Math.max(0, (p.matchesPlayed||0) - 1);
+  });
   savedResults.splice(idx,1);
   renderPastResults();
   renderSeason();
+  refreshLedger();
+  saveState();
 }
 
 function ledNotif(msg, success=true) {
@@ -1558,7 +1895,294 @@ function ledNotif(msg, success=true) {
   setTimeout(() => n.style.display = 'none', 2200);
 }
 
+// ── SETTINGS ───────────────────────────────────────────────────────────────
+const SETTINGS_KEY = 'ipl_fantasy_settings';
+let appSettings = {
+  waPhoneId: '', waToken: '', waTestNum: '', upi: '', adminName: '',
+  tplMorning: `🏏 Match day! {teams}\n📅 {date} · {time}\n💰 Entry: ₹{fee} — pay to {upi}\n⏰ Pick your Dream11 team before toss!`,
+  tplFinal:   `⚠️ Last chance! {teams} starts in 30 mins.\nUnpaid: {unpaid}\nPay now or you'll be marked as debt 📋`,
+  tplResults: `🏆 {teams} Results!\n🥇 {winner1} — {pts1} pts → +₹{prize1}\n🥈 {winner2} — {pts2} pts → +₹{prize2}\n\nBetter luck next match! 💪`
+};
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) appSettings = { ...appSettings, ...JSON.parse(raw) };
+  } catch(e) {}
+}
+
+function saveSettings() {
+  appSettings.waPhoneId  = document.getElementById('cfg-phone-id')?.value.trim() || appSettings.waPhoneId;
+  appSettings.waToken    = document.getElementById('cfg-token')?.value.trim()    || appSettings.waToken;
+  appSettings.waTestNum  = document.getElementById('cfg-test-num')?.value.trim() || appSettings.waTestNum;
+  appSettings.upi        = document.getElementById('cfg-upi')?.value.trim()       || appSettings.upi;
+  appSettings.adminName  = document.getElementById('cfg-admin-name')?.value.trim()|| appSettings.adminName;
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings)); } catch(e) {}
+  const n = document.getElementById('cfg-notif');
+  n.textContent = '✅ Settings saved!'; n.className = 'notification notif-success'; n.style.display = 'block';
+  setTimeout(() => n.style.display = 'none', 2000);
+}
+
+function goToSettings() { showSection('settings', null); }
+
+function renderSettingsForm() {
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
+  set('cfg-phone-id', appSettings.waPhoneId);
+  set('cfg-token', appSettings.waToken);
+  set('cfg-test-num', appSettings.waTestNum);
+  set('cfg-upi', appSettings.upi);
+  set('cfg-admin-name', appSettings.adminName);
+}
+
+async function testWaApi() {
+  const n = document.getElementById('cfg-notif');
+  if (!appSettings.waPhoneId || !appSettings.waToken) {
+    n.textContent = '⚠️ Save your Phone Number ID and Access Token first.';
+    n.className = 'notification notif-info'; n.style.display = 'block'; return;
+  }
+  const to = appSettings.waTestNum || (players[0]?.phone || '');
+  if (!to) { n.textContent = '⚠️ Enter a test number above.'; n.className = 'notification notif-info'; n.style.display = 'block'; return; }
+  n.textContent = 'Sending test message...'; n.className = 'notification notif-info'; n.style.display = 'block';
+  const ok = await sendWaMessage(to, '🏏 IPL Fantasy Admin — WhatsApp API connected successfully!');
+  n.textContent = ok ? '✅ Test message sent!' : '❌ Failed. Check your Phone Number ID and token.';
+  n.className = 'notification ' + (ok ? 'notif-success' : 'notif-info');
+}
+
+// ── WHATSAPP API SENDER ────────────────────────────────────────────────────
+async function sendWaMessage(to, text) {
+  try {
+    const res = await fetch(`https://graph.facebook.com/v19.0/${appSettings.waPhoneId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + appSettings.waToken },
+      body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body: text } })
+    });
+    const data = await res.json();
+    return !!data.messages;
+  } catch(e) { return false; }
+}
+
+function resolveTemplate(tpl, matchIdx) {
+  const m = iplSchedule[matchIdx];
+  const pool = players.length * m.fee;
+  const unpaidNames = players.filter(p => {
+    const s = (matchPayments[matchIdx] || {})[p.id];
+    return s !== true;
+  }).map(p => p.name).join(', ') || 'None';
+  return tpl
+    .replace(/{teams}/g, m.teams)
+    .replace(/{team1}/g, m.teams.split(' vs ')[0])
+    .replace(/{team2}/g, m.teams.split(' vs ')[1])
+    .replace(/{date}/g, m.date)
+    .replace(/{time}/g, m.time)
+    .replace(/{fee}/g, m.fee)
+    .replace(/{pool}/g, pool)
+    .replace(/{upi}/g, appSettings.upi || '[UPI]')
+    .replace(/{admin}/g, appSettings.adminName || 'Admin')
+    .replace(/{unpaid}/g, unpaidNames);
+}
+
+// ── REMINDERS RENDERER ─────────────────────────────────────────────────────
+const REMINDER_TYPES = [
+  { key: 'morning',  label: 'Morning reminder',  sub: 'Match day · sent at 10:00 AM', tplKey: 'tplMorning' },
+  { key: 'deadline', label: '2 hrs before toss',  sub: 'Deadline reminder',            tplKey: 'tplMorning' },
+  { key: 'final',    label: 'Final warning',       sub: '30 mins before toss · unpaid only', tplKey: 'tplFinal' },
+];
+
+function renderWaReminders() {
+  const m = iplSchedule[activeMatchIdx];
+  document.getElementById('wa-next-match-badge').textContent = m ? m.teams + ' · ' + m.date : '—';
+
+  // Populate send-player dropdown
+  const sel = document.getElementById('wa-send-player');
+  if (sel) {
+    sel.innerHTML = '<option value="all">All players</option>' +
+      players.map(p => `<option value="${p.id}">${p.name}${p.phone ? '' : ' ⚠️ no number'}</option>`).join('');
+  }
+
+  // Default manual message textarea
+  const ta = document.getElementById('manual-msg');
+  if (ta && !ta.dataset.edited) ta.value = resolveTemplate(appSettings.tplMorning, activeMatchIdx);
+
+  // API status banner
+  const hasApi = !!(appSettings.waPhoneId && appSettings.waToken);
+  const statusCard = document.getElementById('wa-api-status-card');
+  const statusMsg  = document.getElementById('wa-api-status-msg');
+  if (statusCard && statusMsg) {
+    statusCard.style.display = 'block';
+    if (hasApi) {
+      statusCard.style.background = '#0d2e18'; statusCard.style.border = '0.5px solid #1a5c30';
+      statusMsg.innerHTML = '✅ <strong style="color:#4caf72;">WhatsApp API configured.</strong> <span style="color:#888;">Messages will be sent directly.</span>';
+    } else {
+      statusCard.style.background = '#2e1f05'; statusCard.style.border = '0.5px solid #5a3a10';
+      statusMsg.innerHTML = '⚠️ <span style="color:#e09436;">WhatsApp API not set up.</span> <span style="color:#888;">Configure in <button onclick="goToSettings()" style="background:none;border:none;color:#5b8dee;cursor:pointer;font-size:13px;text-decoration:underline;padding:0;">⚙️ Settings</button> — will fall back to wa.me links.</span>';
+    }
+  }
+
+  // Reminder rows
+  document.getElementById('wa-reminders-list').innerHTML = REMINDER_TYPES.map(r => `
+    <div class="reminder-item">
+      <div>
+        <div style="font-size:14px;font-weight:500;">${r.label}</div>
+        <div style="font-size:12px;color:#666;">${r.sub}</div>
+      </div>
+      <button class="btn-green" style="font-size:12px;padding:5px 12px;" onclick="sendReminder('${r.key}')">Send</button>
+    </div>`).join('');
+
+  // Populate templates
+  const set = (id, val) => { const el = document.getElementById(id); if(el && !el.dataset.edited) el.value = val; };
+  set('tpl-morning', appSettings.tplMorning);
+  set('tpl-final',   appSettings.tplFinal);
+  set('tpl-results', appSettings.tplResults);
+}
+
+async function sendReminder(type) {
+  const msg = resolveTemplate(
+    type === 'final' ? appSettings.tplFinal : appSettings.tplMorning,
+    activeMatchIdx
+  );
+  const hasApi = !!(appSettings.waPhoneId && appSettings.waToken);
+  const targets = players.filter(p => p.phone);
+  if (!targets.length) { alert('No players have WhatsApp numbers. Add them in the Recipients tab.'); return; }
+
+  if (hasApi) {
+    // Send via API one by one
+    let sent = 0;
+    for (const p of targets) {
+      const ok = await sendWaMessage(p.phone, msg);
+      if (ok) sent++;
+    }
+    const n = document.getElementById('wa-send-notif');
+    n.textContent = `✅ Sent to ${sent}/${targets.length} players.`;
+    n.className = 'notification notif-success'; n.style.display = 'block';
+    setTimeout(() => n.style.display = 'none', 3000);
+  } else {
+    // Fallback: open wa.me one by one
+    openNextWaLink(targets, msg, 0);
+  }
+}
+
+function openNextWaLink(targets, msg, idx) {
+  if (idx >= targets.length) return;
+  const p = targets[idx];
+  window.open('https://wa.me/' + p.phone + '?text=' + encodeURIComponent(msg), '_blank');
+  if (idx + 1 < targets.length) {
+    setTimeout(() => {
+      if (confirm(`Opened WhatsApp for ${p.name}. Open for ${targets[idx+1].name} next?`)) {
+        openNextWaLink(targets, msg, idx + 1);
+      }
+    }, 800);
+  }
+}
+
+function sendManualMsg() {
+  const msg = document.getElementById('manual-msg').value;
+  if (!msg.trim()) { alert('Message is empty.'); return; }
+  const selEl = document.getElementById('wa-send-player');
+  const val = selEl?.value;
+  const hasApi = !!(appSettings.waPhoneId && appSettings.waToken);
+
+  if (val === 'all' || !val) {
+    const targets = players.filter(p => p.phone);
+    if (!targets.length) { alert('No players have WhatsApp numbers.'); return; }
+    if (hasApi) {
+      (async () => {
+        let sent = 0;
+        for (const p of targets) { if (await sendWaMessage(p.phone, msg)) sent++; }
+        const n = document.getElementById('wa-send-notif');
+        n.textContent = `✅ Sent to ${sent}/${targets.length} players.`;
+        n.className = 'notification notif-success'; n.style.display = 'block';
+        setTimeout(() => n.style.display = 'none', 3000);
+      })();
+    } else {
+      openNextWaLink(targets, msg, 0);
+    }
+  } else {
+    const p = players.find(x => x.id == val);
+    if (!p?.phone) { alert('This player has no WhatsApp number.'); return; }
+    if (hasApi) {
+      sendWaMessage(p.phone, msg).then(ok => {
+        const n = document.getElementById('wa-send-notif');
+        n.textContent = ok ? `✅ Sent to ${p.name}.` : '❌ Failed to send.';
+        n.className = 'notification ' + (ok ? 'notif-success' : 'notif-info');
+        n.style.display = 'block';
+        setTimeout(() => n.style.display = 'none', 3000);
+      });
+    } else {
+      window.open('https://wa.me/' + p.phone + '?text=' + encodeURIComponent(msg), '_blank');
+    }
+  }
+}
+
+function previewMsg() {
+  const p = document.getElementById('manual-preview');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  document.getElementById('manual-preview-text').textContent = document.getElementById('manual-msg').value;
+}
+
+function saveTpl(type) {
+  const map = { morning:'tplMorning', final:'tplFinal', results:'tplResults' };
+  const el = document.getElementById('tpl-' + type);
+  if (el) { appSettings[map[type]] = el.value; el.dataset.edited = '1'; }
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings)); } catch(e) {}
+  alert('Template saved!');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 </script>
+
+<!-- SETTINGS -->
+<div id="sec-settings" class="section">
+  <div class="card" style="margin-bottom:10px;">
+    <div class="section-title">WhatsApp Business API</div>
+    <div style="font-size:12px;color:#666;margin-bottom:14px;line-height:1.6;">
+      Required to send messages directly from this app. Get these from
+      <a href="https://developers.facebook.com/apps/" target="_blank" style="color:#5b8dee;">Meta Developer Console</a>
+      → Your App → WhatsApp → API Setup.
+    </div>
+    <div style="margin-bottom:10px;">
+      <div class="label">Phone Number ID</div>
+      <input type="text" id="cfg-phone-id" placeholder="e.g. 123456789012345">
+    </div>
+    <div style="margin-bottom:10px;">
+      <div class="label">Access Token</div>
+      <input type="text" id="cfg-token" placeholder="EAAxxxxx...">
+    </div>
+    <div style="margin-bottom:14px;">
+      <div class="label">Test number (to verify setup)</div>
+      <input type="text" id="cfg-test-num" placeholder="91XXXXXXXXXX">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-primary" onclick="saveSettings()">Save credentials</button>
+      <button class="btn-secondary" onclick="testWaApi()">Send test message</button>
+    </div>
+    <div class="notification" id="cfg-notif" style="margin-top:10px;"></div>
+  </div>
+  <div class="card" style="margin-bottom:10px;">
+    <div class="section-title">Payment details</div>
+    <div style="margin-bottom:10px;">
+      <div class="label">Your UPI ID</div>
+      <input type="text" id="cfg-upi" placeholder="yourname@upi">
+    </div>
+    <div style="margin-bottom:14px;">
+      <div class="label">Your name (shown in messages)</div>
+      <input type="text" id="cfg-admin-name" placeholder="e.g. Rahul">
+    </div>
+    <button class="btn-primary" onclick="saveSettings()">Save</button>
+  </div>
+  <div class="card">
+    <div class="section-title">How to set up WhatsApp Business API</div>
+    <div style="font-size:13px;color:#888;line-height:1.8;">
+      1. Go to <a href="https://developers.facebook.com" target="_blank" style="color:#5b8dee;">developers.facebook.com</a> and create an app<br>
+      2. Add the <strong style="color:#ccc;">WhatsApp</strong> product to your app<br>
+      3. Under <strong style="color:#ccc;">API Setup</strong>, note your Phone Number ID<br>
+      4. Generate a <strong style="color:#ccc;">Temporary Access Token</strong> (or permanent via System User)<br>
+      5. Add your players numbers as recipients in the Meta console (test mode)<br>
+      6. Paste the credentials above and hit Save<br><br>
+      <span style="color:#555;">Free tier: 1,000 messages/month. Enough for a full IPL season.</span>
+    </div>
+  </div>
+</div>
+
 
 <!-- LEDGER -->
 <div id="sec-ledger" class="section">
@@ -1623,6 +2247,5 @@ function ledNotif(msg, success=true) {
   </div>
 </div>
 
-<script>initLedger(); refreshLedger();</script>
 </body>
 </html>
