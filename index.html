@@ -59,6 +59,7 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 .payout-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; }
 .payout-1 { background: #2a1e08; }
 .payout-2 { background: #1e1e1e; }
+.payout-3 { background: #1a2010; }
 .upload-area { border: 1.5px dashed #2e2e2e; border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.15s; }
 .upload-area:hover { background: #1e1e1e; border-color: #444; }
 .notification { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: none; }
@@ -104,6 +105,8 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 .btn-icon { padding:5px 10px; border-radius:8px; border:0.5px solid #2e2e2e; background:transparent; cursor:pointer; font-size:12px; color:#666; transition:all 0.15s; }
 .btn-icon:hover { background:#242424; color:#ccc; }
 .btn-icon.danger:hover { background:#2e0d0d; color:#e05555; border-color:#5a1a1a; }
+.winner-btn { padding:6px 16px;border-radius:8px;border:0.5px solid #2e2e2e;background:transparent;cursor:pointer;font-size:14px;font-weight:500;color:#666;transition:all 0.15s; }
+.winner-btn.active { background:#2a2a2a;color:#f0f0f0;border-color:#444; }
 .absent-chip { display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;border:0.5px solid #2e2e2e;background:transparent;cursor:pointer;font-size:12px;color:#666;transition:all 0.15s;user-select:none; }
 .absent-chip.marked { background:#2e1205;color:#e07a35;border-color:#5a2a10; }
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; padding:1rem; }
@@ -363,11 +366,21 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
       <div id="payout-list"></div>
       <!-- Inline payout edit panel -->
       <div id="ai-payout-edit" style="display:none;background:#242424;border-radius:10px;padding:14px;margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:500;color:#666;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;">Edit payouts</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-          <div><div class="label">🥇 1st prize (₹)</div><input type="number" id="ai-edit-prize1" min="0"></div>
-          <div><div class="label">🥈 2nd prize (₹)</div><input type="number" id="ai-edit-prize2" min="0"></div>
+        <div style="font-size:12px;font-weight:500;color:#666;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em;">Edit payouts</div>
+        <div style="margin-bottom:12px;">
+          <div class="label" style="margin-bottom:6px;">Number of winners</div>
+          <div style="display:flex;gap:6px;">
+            <button class="winner-btn active" id="ai-w-btn-1" onclick="setWinners('ai',1)">1</button>
+            <button class="winner-btn" id="ai-w-btn-2" onclick="setWinners('ai',2)">2</button>
+            <button class="winner-btn" id="ai-w-btn-3" onclick="setWinners('ai',3)">3</button>
+          </div>
         </div>
+        <div style="margin-bottom:12px;">
+          <div class="label">Total pool (₹)</div>
+          <input type="number" id="ai-edit-pool" min="0" oninput="recalcPayouts('ai')">
+        </div>
+        <div id="ai-winner-rows"></div>
+        <div id="ai-split-warning" style="font-size:12px;color:#e05555;margin-bottom:8px;display:none;">⚠️ Percentages must add up to 100%</div>
         <div style="display:flex;gap:8px;">
           <button class="btn-primary btn-sm" onclick="applyPayoutEdit('ai')">Apply</button>
           <button class="btn-secondary btn-sm" onclick="togglePayoutEdit('ai')">Cancel</button>
@@ -414,6 +427,25 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
         <div class="label">Points</div>
         <input type="number" id="manual-rank2-pts" placeholder="e.g. 198" min="0">
       </div>
+      <div id="manual-rank3-section" style="display:none;">
+        <div class="section-title" style="margin-top:14px;">🥉 3rd Place</div>
+        <div style="margin-bottom:10px;">
+          <div class="label">Player</div>
+          <select id="manual-rank3-player" onchange="updateManualPrizes()"></select>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="label">Points</div>
+          <input type="number" id="manual-rank3-pts" placeholder="e.g. 165" min="0">
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="label" style="margin-bottom:6px;">Number of winners</div>
+        <div style="display:flex;gap:6px;">
+          <button class="winner-btn active" id="manual-entry-w-btn-1" onclick="setManualEntryWinners(1)">1</button>
+          <button class="winner-btn" id="manual-entry-w-btn-2" onclick="setManualEntryWinners(2)">2</button>
+          <button class="winner-btn" id="manual-entry-w-btn-3" onclick="setManualEntryWinners(3)">3</button>
+        </div>
+      </div>
     </div>
     <div class="card" id="manual-preview-card" style="display:none;margin-bottom:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -424,11 +456,21 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
       <div id="manual-payout-list"></div>
       <!-- Inline payout edit panel -->
       <div id="manual-payout-edit" style="display:none;background:#242424;border-radius:10px;padding:14px;margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:500;color:#666;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;">Edit payouts</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-          <div><div class="label">🥇 1st prize (₹)</div><input type="number" id="manual-edit-prize1" min="0"></div>
-          <div><div class="label">🥈 2nd prize (₹)</div><input type="number" id="manual-edit-prize2" min="0"></div>
+        <div style="font-size:12px;font-weight:500;color:#666;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em;">Edit payouts</div>
+        <div style="margin-bottom:12px;">
+          <div class="label" style="margin-bottom:6px;">Number of winners</div>
+          <div style="display:flex;gap:6px;">
+            <button class="winner-btn active" id="manual-w-btn-1" onclick="setWinners('manual',1)">1</button>
+            <button class="winner-btn" id="manual-w-btn-2" onclick="setWinners('manual',2)">2</button>
+            <button class="winner-btn" id="manual-w-btn-3" onclick="setWinners('manual',3)">3</button>
+          </div>
         </div>
+        <div style="margin-bottom:12px;">
+          <div class="label">Total pool (₹)</div>
+          <input type="number" id="manual-edit-pool" min="0" oninput="recalcPayouts('manual')">
+        </div>
+        <div id="manual-winner-rows"></div>
+        <div id="manual-split-warning" style="font-size:12px;color:#e05555;margin-bottom:8px;display:none;">⚠️ Percentages must add up to 100%</div>
         <div style="display:flex;gap:8px;">
           <button class="btn-primary btn-sm" onclick="applyPayoutEdit('manual')">Apply</button>
           <button class="btn-secondary btn-sm" onclick="togglePayoutEdit('manual')">Cancel</button>
@@ -492,6 +534,21 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
     <div class="modal-field">
       <label>Prize (₹)</label>
       <input type="number" id="edit-prize2">
+    </div>
+    <div id="edit-rank3-section">
+      <div style="font-size:12px;font-weight:500;color:#666;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">🥉 3rd Place <span style="font-size:11px;color:#555;">(leave blank if no 3rd place)</span></div>
+      <div class="modal-field">
+        <label>Player name</label>
+        <input type="text" id="edit-rank3-name" placeholder="Optional">
+      </div>
+      <div class="modal-field">
+        <label>Points</label>
+        <input type="number" id="edit-rank3-pts">
+      </div>
+      <div class="modal-field">
+        <label>Prize (₹)</label>
+        <input type="number" id="edit-prize3">
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-primary" onclick="saveEditedResult()">Save changes</button>
@@ -581,6 +638,8 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 
 <script>
 const PRIZE_SPLIT = [0.70, 0.30];
+const PRIZE_SPLIT_3 = [0.60, 0.30, 0.10]; // default 3-winner split
+let _editWinners = { ai: 2, manual: 2 }; // current winner count per mode
 const FEE_PRESETS = [50, 100, 200, 500];
 
 let players = [];
@@ -969,46 +1028,101 @@ async function handleScreenshot(input) {
   reader.readAsDataURL(file);
 }
 
+function buildPayoutRowHtml(rank, name, pts, prize) {
+  const styles = ['payout-1','payout-2','payout-3'];
+  const badgeStyles = ['rank-1','rank-2','rank-3'];
+  const ptColors = ['#633806','#888','#888'];
+  const prizeColors = ['#FAC775','#aaa','#888'];
+  const i = rank - 1;
+  return `<div class="payout-row ${styles[i]||styles[1]}" style="border-radius:8px;margin-bottom:6px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="rank-badge ${badgeStyles[i]||badgeStyles[1]}">${rank}</div>
+      <div><div style="font-weight:500;font-size:14px;">${name}</div>
+      <div style="font-size:12px;color:${ptColors[i]||'#888'};">${pts} pts</div></div>
+    </div>
+    <div style="font-weight:500;color:${prizeColors[i]||'#888'};">+₹${prize}</div>
+  </div>`;
+}
+
+function calcDefaultPrizes(pool, numWinners) {
+  if (numWinners === 1) return [pool, 0, 0];
+  if (numWinners === 2) return [Math.round(pool*0.70), Math.round(pool*0.30), 0];
+  return [Math.round(pool*0.60), Math.round(pool*0.30), Math.round(pool*0.10)];
+}
+
+function defaultSplits(numWinners) {
+  if (numWinners === 1) return [100, 0, 0];
+  if (numWinners === 2) return [70, 30, 0];
+  return [60, 30, 10];
+}
+
 function showPayoutPreview(rankings, file, matchFee, matchIdx) {
   document.getElementById('ai-loading-card').style.display='none';
   const m = iplSchedule[matchIdx];
   const absentIds = window._aiAbsentIds || [];
   const participating = players.filter(p => !absentIds.includes(p.id));
   const pool = participating.length * matchFee;
-  const prize1 = Math.round(pool*PRIZE_SPLIT[0]);
-  const prize2 = Math.round(pool*PRIZE_SPLIT[1]);
-  // Store draft so edit payout panel can update it
+  const numW = Math.min(rankings.length, 2); // default 2, user can change in edit
+  const [prize1, prize2, prize3] = calcDefaultPrizes(pool, numW);
+  _editWinners.ai = numW;
   window._aiDraft = {
-    matchIdx, pool, matchFee,
+    matchIdx, pool, matchFee, numWinners: numW,
     name1: rankings[0]?.name, pts1: rankings[0]?.points, prize1,
     name2: rankings[1]?.name, pts2: rankings[1]?.points, prize2,
+    name3: rankings[2]?.name, pts3: rankings[2]?.points, prize3,
     waMsg: '', absentIds: [...absentIds]
   };
   document.getElementById('uploaded-img').src = URL.createObjectURL(file);
-  const absentNote = absentIds.length > 0 ? ` · ${absentIds.length} absent` : '';
-  document.getElementById('pool-summary').textContent =
-    `Pool: ₹${pool} (${participating.length} × ₹${matchFee}${absentNote}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
-  document.getElementById('payout-list').innerHTML = rankings.slice(0,2).map((r,i)=>`
-    <div class="payout-row ${i===0?'payout-1':'payout-2'}" style="border-radius:8px;margin-bottom:${i===0?'6px':'0'};">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="rank-badge ${i===0?'rank-1':'rank-2'}">${r.rank}</div>
-        <div><div style="font-weight:500;font-size:14px;">${r.name}</div>
-        <div style="font-size:12px;color:${i===0?'#633806':'#888'};">${r.points} pts</div></div>
-      </div>
-      <div style="font-weight:500;color:${i===0?'#412402':'#666'};">+₹${i===0?prize1:prize2}</div>
-    </div>`).join('');
-  const waMsg = buildWaMsg(m.teams, rankings[0]?.name, rankings[0]?.points, prize1, rankings[1]?.name, rankings[1]?.points, prize2, absentIds);
+  renderPayoutSummary('ai');
+  renderPayoutRows('ai');
+  const waMsg = buildWaMsg(m.teams, getDraftWinners('ai'), absentIds);
   window._aiDraft.waMsg = waMsg;
   document.getElementById('wa-result-msg').textContent = waMsg;
-  document.getElementById('ai-payout-edit').style.display = 'none'; // reset edit panel
-  // Render absent chips
+  document.getElementById('ai-payout-edit').style.display = 'none';
   renderAbsentChips('ai', matchIdx);
   document.getElementById('result-preview').style.display='block';
   document.getElementById('result-preview').scrollIntoView({behavior:'smooth'});
 }
 
-function buildWaMsg(teams, n1, pts1, prize1, n2, pts2, prize2, absentIds) {
-  let msg = `🏏 ${teams} Results!\n🥇 ${n1} — ${pts1} pts → +₹${prize1}\n🥈 ${n2} — ${pts2} pts → +₹${prize2}`;
+function getDraftWinners(mode) {
+  const d = mode === 'ai' ? window._aiDraft : window._manualDraft;
+  if (!d) return [];
+  const out = [{name:d.name1, pts:d.pts1, prize:d.prize1}];
+  if (d.numWinners >= 2) out.push({name:d.name2, pts:d.pts2, prize:d.prize2});
+  if (d.numWinners >= 3) out.push({name:d.name3, pts:d.pts3, prize:d.prize3});
+  return out;
+}
+
+function renderPayoutSummary(mode) {
+  const d = mode === 'ai' ? window._aiDraft : window._manualDraft;
+  if (!d) return;
+  const absentIds = d.absentIds || [];
+  const absentNote = absentIds.length > 0 ? ` · ${absentIds.length} absent` : '';
+  const parts = [`Pool: ₹${d.pool}`];
+  if (d.numWinners >= 1) parts.push(`1st: ₹${d.prize1}`);
+  if (d.numWinners >= 2) parts.push(`2nd: ₹${d.prize2}`);
+  if (d.numWinners >= 3) parts.push(`3rd: ₹${d.prize3}`);
+  const summaryId = mode === 'ai' ? 'pool-summary' : 'manual-pool-summary';
+  document.getElementById(summaryId).textContent = parts.join(' · ') + absentNote;
+}
+
+function renderPayoutRows(mode) {
+  const d = mode === 'ai' ? window._aiDraft : window._manualDraft;
+  if (!d) return;
+  const listId = mode === 'ai' ? 'payout-list' : 'manual-payout-list';
+  let html = buildPayoutRowHtml(1, d.name1||'—', d.pts1||0, d.prize1);
+  if (d.numWinners >= 2 && d.name2) html += buildPayoutRowHtml(2, d.name2, d.pts2||0, d.prize2);
+  if (d.numWinners >= 3 && d.name3) html += buildPayoutRowHtml(3, d.name3, d.pts3||0, d.prize3);
+  document.getElementById(listId).innerHTML = html;
+}
+
+function buildWaMsg(teams, winners, absentIds) {
+  // winners: [{name, pts, prize}, ...]
+  const medals = ['🥇','🥈','🥉'];
+  let msg = `🏏 ${teams} Results!`;
+  winners.forEach((w, i) => {
+    if (w && w.name) msg += `\n${medals[i]} ${w.name} — ${w.pts} pts → +₹${w.prize}`;
+  });
   if (absentIds && absentIds.length > 0) {
     const absentNames = players.filter(p => absentIds.includes(p.id)).map(p => p.name).join(', ');
     msg += `\n\n🚫 Absent: ${absentNames}`;
@@ -1049,16 +1163,11 @@ function toggleAbsent(mode, playerId, matchIdx) {
     const d = window._aiDraft;
     const m = iplSchedule[d.matchIdx];
     const pool = participating.length * d.matchFee;
-    const prize1 = Math.round(pool * PRIZE_SPLIT[0]);
-    const prize2 = Math.round(pool * PRIZE_SPLIT[1]);
-    d.pool = pool; d.prize1 = prize1; d.prize2 = prize2; d.absentIds = [...absentIds];
-    const absentNote = absentIds.length > 0 ? ` · ${absentIds.length} absent` : '';
-    document.getElementById('pool-summary').textContent =
-      `Pool: ₹${pool} (${participating.length} × ₹${d.matchFee}${absentNote}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
-    document.getElementById('payout-list').querySelectorAll('.payout-row').forEach((row, i) => {
-      row.querySelector('div[style*="font-weight:500;color"]').textContent = '+₹' + (i===0?prize1:prize2);
-    });
-    const waMsg = buildWaMsg(m.teams, d.name1, d.pts1, prize1, d.name2, d.pts2, prize2, absentIds);
+    const [p1,p2,p3] = calcDefaultPrizes(pool, d.numWinners||2);
+    d.pool = pool; d.prize1 = p1; d.prize2 = p2; d.prize3 = p3; d.absentIds = [...absentIds];
+    renderPayoutSummary('ai');
+    renderPayoutRows('ai');
+    const waMsg = buildWaMsg(m.teams, getDraftWinners('ai'), absentIds);
     d.waMsg = waMsg;
     document.getElementById('wa-result-msg').textContent = waMsg;
   }
@@ -1066,16 +1175,11 @@ function toggleAbsent(mode, playerId, matchIdx) {
     const d = window._manualDraft;
     const m = iplSchedule[d.matchIdx];
     const pool = participating.length * m.fee;
-    const prize1 = Math.round(pool * PRIZE_SPLIT[0]);
-    const prize2 = Math.round(pool * PRIZE_SPLIT[1]);
-    d.pool = pool; d.prize1 = prize1; d.prize2 = prize2; d.absentIds = [...absentIds];
-    const absentNote = absentIds.length > 0 ? ` · ${absentIds.length} absent` : '';
-    document.getElementById('manual-pool-summary').textContent =
-      `Pool: ₹${pool} (${participating.length} × ₹${m.fee}${absentNote}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
-    document.getElementById('manual-payout-list').querySelectorAll('.payout-row').forEach((row, i) => {
-      row.querySelector('div[style*="font-weight:500;color"]').textContent = '+₹' + (i===0?prize1:prize2);
-    });
-    const waMsg = buildWaMsg(m.teams, d.name1, d.pts1, prize1, d.name2, d.pts2, prize2, absentIds);
+    const [p1,p2,p3] = calcDefaultPrizes(pool, d.numWinners||2);
+    d.pool = pool; d.prize1 = p1; d.prize2 = p2; d.prize3 = p3; d.absentIds = [...absentIds];
+    renderPayoutSummary('manual');
+    renderPayoutRows('manual');
+    const waMsg = buildWaMsg(m.teams, getDraftWinners('manual'), absentIds);
     d.waMsg = waMsg;
     document.getElementById('manual-wa-msg').textContent = waMsg;
   }
@@ -1088,34 +1192,35 @@ function confirmResults() {
     const m = iplSchedule[d.matchIdx];
     const absentIds = d.absentIds || [];
     const participating = players.filter(p => !absentIds.includes(p.id));
-    const w = seasonStats.find(p=>p.name===d.name1);
-    const s = seasonStats.find(p=>p.name===d.name2);
-    if(w){w.wins++;w.earned+=d.prize1;}
-    if(s){s.earned+=d.prize2;}
-    // Increment matchesPlayed for all non-absent players
+    const numW = d.numWinners || 2;
+    const winnerEntries = [
+      {name:d.name1,pts:d.pts1,prize:d.prize1,note:'🥇 1st place'},
+      {name:d.name2,pts:d.pts2,prize:d.prize2,note:'🥈 2nd place'},
+      {name:d.name3,pts:d.pts3,prize:d.prize3,note:'🥉 3rd place'},
+    ].slice(0, numW).filter(w=>w.name);
+    // Update seasonStats
+    winnerEntries.forEach((w,i) => {
+      const st = seasonStats.find(p=>p.name===w.name);
+      if(st){ if(i===0) st.wins++; st.earned+=w.prize; }
+    });
     seasonStats.forEach(p => {
       if(!absentIds.includes(p.id)) p.matchesPlayed = (p.matchesPlayed||0) + 1;
     });
-    // Update ledger: debit entry fee from all participants, credit prizes to winners
+    // Update ledger
     initLedger();
     participating.forEach(p => {
       ledger[p.id].balance -= d.matchFee;
       ledger[p.id].transactions.unshift({ type:'debit', amount:d.matchFee, note:`Entry fee — ${m.teams}`, date:todayStr() });
     });
-    const winner = players.find(p=>p.name===d.name1);
-    const second = players.find(p=>p.name===d.name2);
-    if(winner) {
-      ledger[winner.id].balance += d.prize1;
-      ledger[winner.id].transactions.unshift({ type:'credit', amount:d.prize1, note:`🥇 1st place — ${m.teams}`, date:todayStr() });
-    }
-    if(second) {
-      ledger[second.id].balance += d.prize2;
-      ledger[second.id].transactions.unshift({ type:'credit', amount:d.prize2, note:`🥈 2nd place — ${m.teams}`, date:todayStr() });
-    }
+    winnerEntries.forEach(w => {
+      const pl = players.find(p=>p.name===w.name);
+      if(pl){ ledger[pl.id].balance += w.prize; ledger[pl.id].transactions.unshift({ type:'credit', amount:w.prize, note:`${w.note} — ${m.teams}`, date:todayStr() }); }
+    });
     savedResults.unshift({
-      matchName: m.teams, date: m.date,
+      matchName: m.teams, date: m.date, numWinners: numW,
       rank1: { name:d.name1, pts:d.pts1, prize:d.prize1 },
-      rank2: { name:d.name2, pts:d.pts2, prize:d.prize2 },
+      rank2: { name:d.name2||'', pts:d.pts2||0, prize:d.prize2||0 },
+      rank3: { name:d.name3||'', pts:d.pts3||0, prize:d.prize3||0 },
       pool: d.pool, savedAt: todayStr(),
       absentIds, participantCount: participating.length
     });
@@ -1602,79 +1707,122 @@ function openLedgerFor(id) {
   setTimeout(() => { document.getElementById('led-player').value = id; }, 50);
 }
 
+// ── MULTI-WINNER PAYOUT EDIT ─────────────────────────────────────────────
+const RANK_LABELS = ['🥇 1st','🥈 2nd','🥉 3rd'];
+const PRIZE_COLORS = ['#FAC775','#aaa','#888'];
+
+function defaultSplits(n) {
+  if (n === 1) return [100, 0, 0];
+  if (n === 2) return [70, 30, 0];
+  return [60, 30, 10];
+}
+
+function renderWinnerRows(mode) {
+  const d = mode === 'ai' ? window._aiDraft : window._manualDraft;
+  const n = _editWinners[mode] || 2;
+  const poolEl = document.getElementById(mode === 'ai' ? 'ai-edit-pool' : 'manual-edit-pool');
+  const pool = parseInt(poolEl?.value) || (d ? d.pool : 0);
+  const splits = d && d.pool > 0 ? [
+    Math.round((d.prize1 / d.pool) * 100),
+    Math.round((d.prize2 / d.pool) * 100),
+    Math.round((d.prize3 / d.pool) * 100),
+  ] : defaultSplits(n);
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    const pct = splits[i] || defaultSplits(n)[i] || 0;
+    const prize = Math.round(pool * pct / 100);
+    html += `<div style="display:grid;grid-template-columns:80px 1fr 90px;gap:8px;margin-bottom:10px;align-items:center;">
+      <div style="font-size:13px;font-weight:500;">${RANK_LABELS[i]}</div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <input type="number" id="${mode}-edit-pct${i+1}" value="${pct}" min="0" max="100"
+          style="text-align:center;width:100%;" oninput="recalcPayouts('${mode}')">
+        <span style="font-size:11px;color:#555;flex-shrink:0;">%</span>
+      </div>
+      <div style="font-size:13px;font-weight:500;color:${PRIZE_COLORS[i]};text-align:right;white-space:nowrap;"
+        id="${mode}-calc-prize${i+1}">₹${prize}</div>
+    </div>`;
+  }
+  document.getElementById(mode + '-winner-rows').innerHTML = html;
+}
+
+function setWinners(mode, n) {
+  _editWinners[mode] = n;
+  [1,2,3].forEach(i => {
+    const btn = document.getElementById(`${mode}-w-btn-${i}`);
+    if (btn) btn.classList.toggle('active', i === n);
+  });
+  renderWinnerRows(mode);
+}
+
+function setManualEntryWinners(n) {
+  window._manualEntryWinners = n;
+  [1,2,3].forEach(i => {
+    const btn = document.getElementById(`manual-entry-w-btn-${i}`);
+    if (btn) btn.classList.toggle('active', i === n);
+  });
+  const sec3 = document.getElementById('manual-rank3-section');
+  if (sec3) sec3.style.display = n >= 3 ? 'block' : 'none';
+}
+
+function recalcPayouts(mode) {
+  const n = _editWinners[mode] || 2;
+  const poolEl = document.getElementById(mode === 'ai' ? 'ai-edit-pool' : 'manual-edit-pool');
+  const pool = parseInt(poolEl?.value) || 0;
+  let total = 0;
+  for (let i = 1; i <= n; i++) {
+    const pct = parseFloat(document.getElementById(`${mode}-edit-pct${i}`)?.value) || 0;
+    total += pct;
+    const prize = Math.round(pool * pct / 100);
+    const el = document.getElementById(`${mode}-calc-prize${i}`);
+    if (el) el.textContent = '₹' + prize;
+  }
+  const warn = document.getElementById(mode + '-split-warning');
+  if (warn) warn.style.display = Math.abs(total - 100) > 0.5 ? 'block' : 'none';
+}
+
 function togglePayoutEdit(mode) {
   const panel = document.getElementById(mode + '-payout-edit');
   const isOpen = panel.style.display !== 'none';
   if (!isOpen) {
-    // Pre-fill current prize values from draft
-    if (mode === 'manual' && window._manualDraft) {
-      document.getElementById('manual-edit-prize1').value = window._manualDraft.prize1;
-      document.getElementById('manual-edit-prize2').value = window._manualDraft.prize2;
-    } else if (mode === 'ai' && window._aiDraft) {
-      document.getElementById('ai-edit-prize1').value = window._aiDraft.prize1;
-      document.getElementById('ai-edit-prize2').value = window._aiDraft.prize2;
+    const d = mode === 'ai' ? window._aiDraft : window._manualDraft;
+    if (d) {
+      const poolEl = document.getElementById(mode === 'ai' ? 'ai-edit-pool' : 'manual-edit-pool');
+      if (poolEl) poolEl.value = d.pool;
+      _editWinners[mode] = d.numWinners || 2;
+      setWinners(mode, _editWinners[mode]);
     }
   }
   panel.style.display = isOpen ? 'none' : 'block';
 }
 
 function applyPayoutEdit(mode) {
-  if (mode === 'manual' && window._manualDraft) {
-    const prize1 = parseInt(document.getElementById('manual-edit-prize1').value) || 0;
-    const prize2 = parseInt(document.getElementById('manual-edit-prize2').value) || 0;
-    window._manualDraft.prize1 = prize1;
-    window._manualDraft.prize2 = prize2;
-    const d = window._manualDraft;
-    const m = iplSchedule[d.matchIdx];
-    // Re-render payout list
-    document.getElementById('manual-payout-list').innerHTML = `
-      <div class="payout-row payout-1" style="border-radius:8px;margin-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div class="rank-badge rank-1">1</div>
-          <div><div style="font-weight:500;font-size:14px;">${d.name1}</div><div style="font-size:12px;color:#e09436;">${d.pts1} pts</div></div>
-        </div>
-        <div style="font-weight:500;color:#FAC775;">+₹${prize1}</div>
-      </div>
-      <div class="payout-row payout-2" style="border-radius:8px;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div class="rank-badge rank-2">2</div>
-          <div><div style="font-weight:500;font-size:14px;">${d.name2}</div><div style="font-size:12px;color:#666;">${d.pts2} pts</div></div>
-        </div>
-        <div style="font-weight:500;color:#666;">+₹${prize2}</div>
-      </div>`;
-    const waMsg = `🏏 ${m.teams} Results!\n🥇 ${d.name1} — ${d.pts1} pts → +₹${prize1}\n🥈 ${d.name2} — ${d.pts2} pts → +₹${prize2}\n\nBetter luck next match! 💪`;
-    window._manualDraft.waMsg = waMsg;
-    document.getElementById('manual-wa-msg').textContent = waMsg;
-    document.getElementById('manual-pool-summary').textContent =
-      `Pool: ₹${d.pool} · 1st: ₹${prize1} (custom) · 2nd: ₹${prize2} (custom)`;
-  } else if (mode === 'ai' && window._aiDraft) {
-    const prize1 = parseInt(document.getElementById('ai-edit-prize1').value) || 0;
-    const prize2 = parseInt(document.getElementById('ai-edit-prize2').value) || 0;
-    window._aiDraft.prize1 = prize1;
-    window._aiDraft.prize2 = prize2;
-    const d = window._aiDraft;
-    const m = iplSchedule[d.matchIdx];
-    document.getElementById('payout-list').innerHTML = `
-      <div class="payout-row payout-1" style="border-radius:8px;margin-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div class="rank-badge rank-1">1</div>
-          <div><div style="font-weight:500;font-size:14px;">${d.name1}</div><div style="font-size:12px;color:#e09436;">${d.pts1} pts</div></div>
-        </div>
-        <div style="font-weight:500;color:#FAC775;">+₹${prize1}</div>
-      </div>
-      <div class="payout-row payout-2" style="border-radius:8px;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div class="rank-badge rank-2">2</div>
-          <div><div style="font-weight:500;font-size:14px;">${d.name2}</div><div style="font-size:12px;color:#666;">${d.pts2} pts</div></div>
-        </div>
-        <div style="font-weight:500;color:#666;">+₹${prize2}</div>
-      </div>`;
-    const waMsg = `🏏 ${m.teams} Results!\n🥇 ${d.name1} — ${d.pts1} pts → +₹${prize1}\n🥈 ${d.name2} — ${d.pts2} pts → +₹${prize2}\n\nBetter luck next match! 💪`;
-    window._aiDraft.waMsg = waMsg;
-    document.getElementById('wa-result-msg').textContent = waMsg;
-    document.getElementById('pool-summary').textContent =
-      `Pool: ₹${d.pool} · 1st: ₹${prize1} (custom) · 2nd: ₹${prize2} (custom)`;
+  const n = _editWinners[mode] || 2;
+  const poolEl = document.getElementById(mode === 'ai' ? 'ai-edit-pool' : 'manual-edit-pool');
+  const pool = parseInt(poolEl?.value) || 0;
+  let total = 0;
+  for (let i = 1; i <= n; i++) total += parseFloat(document.getElementById(`${mode}-edit-pct${i}`)?.value) || 0;
+  if (Math.abs(total - 100) > 0.5) {
+    const warn = document.getElementById(mode + '-split-warning');
+    if (warn) warn.style.display = 'block';
+    return;
   }
+  const prizes = [];
+  for (let i = 1; i <= n; i++) {
+    const pct = parseFloat(document.getElementById(`${mode}-edit-pct${i}`)?.value) || 0;
+    prizes.push(Math.round(pool * pct / 100));
+  }
+  const d = mode === 'ai' ? window._aiDraft : window._manualDraft;
+  if (!d) return;
+  d.pool = pool; d.numWinners = n;
+  d.prize1 = prizes[0] || 0;
+  d.prize2 = prizes[1] || 0;
+  d.prize3 = prizes[2] || 0;
+  const m = iplSchedule[d.matchIdx];
+  renderPayoutSummary(mode);
+  renderPayoutRows(mode);
+  const waMsg = buildWaMsg(m.teams, getDraftWinners(mode), d.absentIds || []);
+  d.waMsg = waMsg;
+  document.getElementById(mode === 'ai' ? 'wa-result-msg' : 'manual-wa-msg').textContent = waMsg;
   togglePayoutEdit(mode);
 }
 
@@ -1698,6 +1846,7 @@ function populateManualPlayerDropdowns() {
   const opts = '<option value="">Select player...</option>' + players.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
   document.getElementById('manual-rank1-player').innerHTML = opts;
   document.getElementById('manual-rank2-player').innerHTML = opts;
+  const r3 = document.getElementById('manual-rank3-player'); if(r3) r3.innerHTML = opts;
 }
 
 function updateManualFeeHint() {
@@ -1717,39 +1866,30 @@ function previewManualResults() {
   const absentIds = window._manualAbsentIds || [];
   const participating = players.filter(p => !absentIds.includes(p.id));
   const pool = participating.length * m.fee;
-  const prize1 = Math.round(pool * PRIZE_SPLIT[0]);
-  const prize2 = Math.round(pool * PRIZE_SPLIT[1]);
+  const numW = window._manualEntryWinners || 2;
   const name1 = document.getElementById('manual-rank1-player').value;
   const pts1  = parseInt(document.getElementById('manual-rank1-pts').value) || 0;
-  const name2 = document.getElementById('manual-rank2-player').value;
-  const pts2  = parseInt(document.getElementById('manual-rank2-pts').value) || 0;
-  if(!name1 || !name2) { alert('Please select players for 1st and 2nd place.'); return; }
-  if(name1 === name2)  { alert('1st and 2nd place cannot be the same player.'); return; }
-  const absentNote = absentIds.length > 0 ? ` · ${absentIds.length} absent` : '';
-  document.getElementById('manual-pool-summary').textContent =
-    `Pool: ₹${pool} (${participating.length} × ₹${m.fee}${absentNote}) · 1st: ₹${prize1} (70%) · 2nd: ₹${prize2} (30%)`;
-  document.getElementById('manual-payout-list').innerHTML = `
-    <div class="payout-row payout-1" style="border-radius:8px;margin-bottom:6px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="rank-badge rank-1">1</div>
-        <div><div style="font-weight:500;font-size:14px;">${name1}</div><div style="font-size:12px;color:#e09436;">${pts1} pts</div></div>
-      </div>
-      <div style="font-weight:500;color:#FAC775;">+₹${prize1}</div>
-    </div>
-    <div class="payout-row payout-2" style="border-radius:8px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="rank-badge rank-2">2</div>
-        <div><div style="font-weight:500;font-size:14px;">${name2}</div><div style="font-size:12px;color:#666;">${pts2} pts</div></div>
-      </div>
-      <div style="font-weight:500;color:#666;">+₹${prize2}</div>
-    </div>`;
-  const waMsg = buildWaMsg(m.teams, name1, pts1, prize1, name2, pts2, prize2, absentIds);
+  const name2 = numW >= 2 ? document.getElementById('manual-rank2-player').value : '';
+  const pts2  = numW >= 2 ? (parseInt(document.getElementById('manual-rank2-pts').value) || 0) : 0;
+  const name3 = numW >= 3 ? document.getElementById('manual-rank3-player').value : '';
+  const pts3  = numW >= 3 ? (parseInt(document.getElementById('manual-rank3-pts').value) || 0) : 0;
+  if (!name1) { alert('Please select the 1st place player.'); return; }
+  if (numW >= 2 && !name2) { alert('Please select the 2nd place player.'); return; }
+  if (numW >= 3 && !name3) { alert('Please select the 3rd place player.'); return; }
+  const names = [name1, name2, name3].filter(Boolean);
+  if (new Set(names).size !== names.length) { alert('Each place must be a different player.'); return; }
+  const [prize1, prize2, prize3] = calcDefaultPrizes(pool, numW);
+  window._manualDraft = { matchIdx:idx, numWinners:numW,
+    name1, pts1, prize1, name2, pts2, prize2, name3, pts3, prize3,
+    pool, waMsg:'', absentIds:[...absentIds] };
+  _editWinners.manual = numW;
+  renderPayoutSummary('manual');
+  renderPayoutRows('manual');
+  const waMsg = buildWaMsg(m.teams, getDraftWinners('manual'), absentIds);
+  window._manualDraft.waMsg = waMsg;
   document.getElementById('manual-wa-msg').textContent = waMsg;
   document.getElementById('manual-preview-card').style.display = 'block';
   document.getElementById('manual-preview-card').scrollIntoView({behavior:'smooth'});
-  // stash for confirm
-  window._manualDraft = { matchIdx:idx, name1, pts1, prize1, name2, pts2, prize2, pool, waMsg, absentIds:[...absentIds] };
-  // Render absent chips
   renderAbsentChips('manual', idx);
 }
 
@@ -1759,34 +1899,33 @@ function confirmManualResults() {
   const m = iplSchedule[d.matchIdx];
   const absentIds = d.absentIds || [];
   const participating = players.filter(p => !absentIds.includes(p.id));
-  const w = seasonStats.find(p=>p.name===d.name1);
-  const s = seasonStats.find(p=>p.name===d.name2);
-  if(w){ w.wins++; w.earned+=d.prize1; }
-  if(s){ s.earned+=d.prize2; }
-  // Increment matchesPlayed for all non-absent players
+  const numW = d.numWinners || 2;
+  const winnerEntries = [
+    {name:d.name1,pts:d.pts1,prize:d.prize1,note:'🥇 1st place'},
+    {name:d.name2,pts:d.pts2,prize:d.prize2,note:'🥈 2nd place'},
+    {name:d.name3,pts:d.pts3,prize:d.prize3,note:'🥉 3rd place'},
+  ].slice(0, numW).filter(w=>w.name);
+  winnerEntries.forEach((w,i) => {
+    const st = seasonStats.find(p=>p.name===w.name);
+    if(st){ if(i===0) st.wins++; st.earned+=w.prize; }
+  });
   seasonStats.forEach(p => {
     if(!absentIds.includes(p.id)) p.matchesPlayed = (p.matchesPlayed||0) + 1;
   });
-  // Update ledger: debit entry fee from all participants, credit prizes to winners
   initLedger();
   participating.forEach(p => {
     ledger[p.id].balance -= m.fee;
     ledger[p.id].transactions.unshift({ type:'debit', amount:m.fee, note:`Entry fee — ${m.teams}`, date:todayStr() });
   });
-  const winner = players.find(p=>p.name===d.name1);
-  const second = players.find(p=>p.name===d.name2);
-  if(winner) {
-    ledger[winner.id].balance += d.prize1;
-    ledger[winner.id].transactions.unshift({ type:'credit', amount:d.prize1, note:`🥇 1st place — ${m.teams}`, date:todayStr() });
-  }
-  if(second) {
-    ledger[second.id].balance += d.prize2;
-    ledger[second.id].transactions.unshift({ type:'credit', amount:d.prize2, note:`🥈 2nd place — ${m.teams}`, date:todayStr() });
-  }
+  winnerEntries.forEach(w => {
+    const pl = players.find(p=>p.name===w.name);
+    if(pl){ ledger[pl.id].balance += w.prize; ledger[pl.id].transactions.unshift({ type:'credit', amount:w.prize, note:`${w.note} — ${m.teams}`, date:todayStr() }); }
+  });
   savedResults.unshift({
-    matchName: m.teams, date: m.date,
+    matchName: m.teams, date: m.date, numWinners: numW,
     rank1: { name:d.name1, pts:d.pts1, prize:d.prize1 },
-    rank2: { name:d.name2, pts:d.pts2, prize:d.prize2 },
+    rank2: { name:d.name2||'', pts:d.pts2||0, prize:d.prize2||0 },
+    rank3: { name:d.name3||'', pts:d.pts3||0, prize:d.prize3||0 },
     pool: d.pool, savedAt: todayStr(),
     absentIds, participantCount: participating.length
   });
@@ -1798,6 +1937,9 @@ function confirmManualResults() {
   document.getElementById('manual-rank1-pts').value = '';
   document.getElementById('manual-rank2-player').value = '';
   document.getElementById('manual-rank2-pts').value = '';
+  const r3p = document.getElementById('manual-rank3-player'); if(r3p) r3p.value = '';
+  const r3t = document.getElementById('manual-rank3-pts'); if(r3t) r3t.value = '';
+  window._manualEntryWinners = 2; setManualEntryWinners(2);
   const notif = document.getElementById('ai-notif');
   notif.textContent = 'Results saved! Season standings updated.';
   notif.className = 'notification notif-success';
@@ -1856,13 +1998,20 @@ function renderPastResults() {
         </div>
         <div style="font-weight:500;color:#FAC775;">+₹${r.rank1.prize}</div>
       </div>
-      <div class="payout-row payout-2" style="border-radius:8px;">
+      <div class="payout-row payout-2" style="border-radius:8px;margin-bottom:6px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="rank-badge rank-2">2</div>
-          <div><div style="font-weight:500;font-size:14px;">${r.rank2.name}</div><div style="font-size:12px;color:#666;">${r.rank2.pts} pts</div></div>
+          <div><div style="font-weight:500;font-size:14px;">${r.rank2.name||'—'}</div><div style="font-size:12px;color:#666;">${r.rank2.pts||0} pts</div></div>
         </div>
-        <div style="font-weight:500;color:#666;">+₹${r.rank2.prize}</div>
+        <div style="font-weight:500;color:#aaa;">+₹${r.rank2.prize||0}</div>
       </div>
+      ${r.rank3?.name ? `<div class="payout-row" style="border-radius:8px;background:#1e1e1e;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank-badge rank-2" style="background:#1e2a1e;color:#4caf72;">3</div>
+          <div><div style="font-weight:500;font-size:14px;">${r.rank3.name}</div><div style="font-size:12px;color:#666;">${r.rank3.pts||0} pts</div></div>
+        </div>
+        <div style="font-weight:500;color:#888;">+₹${r.rank3.prize||0}</div>
+      </div>` : ''}
     </div>`;
   }).join('');
 }
@@ -1877,6 +2026,9 @@ function openEditModal(idx) {
   document.getElementById('edit-rank2-name').value = r.rank2.name;
   document.getElementById('edit-rank2-pts').value = r.rank2.pts;
   document.getElementById('edit-prize2').value = r.rank2.prize;
+  const r3n = document.getElementById('edit-rank3-name'); if(r3n) r3n.value = r.rank3?.name||'';
+  const r3p = document.getElementById('edit-rank3-pts'); if(r3p) r3p.value = r.rank3?.pts||'';
+  const e3 = document.getElementById('edit-prize3'); if(e3) e3.value = r.rank3?.prize||'';
   document.getElementById('edit-result-modal').classList.add('open');
 }
 
@@ -1914,7 +2066,11 @@ function saveEditedResult() {
   const newWinner = players.find(p=>p.name===r1name);
   const newSecond = players.find(p=>p.name===r2name);
   if(newWinner){ ledger[newWinner.id].balance += prize1; ledger[newWinner.id].transactions.unshift({ type:'credit', amount:prize1, note:`🥇 1st place (edited) — ${old.matchName}`, date:todayStr() }); }
-  if(newSecond){ ledger[newSecond.id].balance += prize2; ledger[newSecond.id].transactions.unshift({ type:'credit', amount:prize2, note:`🥈 2nd place (edited) — ${old.matchName}`, date:todayStr() }); }
+  if(newSecond && prize2){ ledger[newSecond.id].balance += prize2; ledger[newSecond.id].transactions.unshift({ type:'credit', amount:prize2, note:`🥈 2nd place (edited) — ${old.matchName}`, date:todayStr() }); }
+  const r3name = document.getElementById('edit-rank3-name')?.value.trim();
+  const r3pts = parseInt(document.getElementById('edit-rank3-pts')?.value)||0;
+  const prize3 = parseInt(document.getElementById('edit-prize3')?.value)||0;
+  if(r3name){ savedResults[idx].rank3 = {name:r3name,pts:r3pts,prize:prize3}; const p3=players.find(p=>p.name===r3name); if(p3&&prize3){ ledger[p3.id].balance+=prize3; ledger[p3.id].transactions.unshift({type:'credit',amount:prize3,note:`🥉 3rd place (edited) — ${old.matchName}`,date:todayStr()}); } }
   closeEditModal();
   renderPastResults();
   renderSeason();
@@ -1953,9 +2109,11 @@ function deleteResult(idx, confirmed) {
     ledger[p.id].transactions.unshift({ type:'credit', amount:Math.round(fee), note:`🗑 Delete reversal — ${r.matchName}`, date:todayStr() });
   });
   const winner = players.find(p=>p.name===r.rank1.name);
-  const second = players.find(p=>p.name===r.rank2.name);
+  const second = players.find(p=>p.name===r.rank2?.name);
+  const third  = r.rank3?.name ? players.find(p=>p.name===r.rank3.name) : null;
   if(winner){ ledger[winner.id].balance -= r.rank1.prize; ledger[winner.id].transactions.unshift({ type:'debit', amount:r.rank1.prize, note:`🗑 Delete reversal — ${r.matchName}`, date:todayStr() }); }
-  if(second){ ledger[second.id].balance -= r.rank2.prize; ledger[second.id].transactions.unshift({ type:'debit', amount:r.rank2.prize, note:`🗑 Delete reversal — ${r.matchName}`, date:todayStr() }); }
+  if(second && r.rank2?.prize){ ledger[second.id].balance -= r.rank2.prize; ledger[second.id].transactions.unshift({ type:'debit', amount:r.rank2.prize, note:`🗑 Delete reversal — ${r.matchName}`, date:todayStr() }); }
+  if(third && r.rank3?.prize){ ledger[third.id].balance -= r.rank3.prize; ledger[third.id].transactions.unshift({ type:'debit', amount:r.rank3.prize, note:`🗑 Delete reversal — ${r.matchName}`, date:todayStr() }); }
   // Reverse matchesPlayed
   seasonStats.forEach(p => {
     if(!absentIds.includes(p.id)) p.matchesPlayed = Math.max(0, (p.matchesPlayed||0) - 1);
