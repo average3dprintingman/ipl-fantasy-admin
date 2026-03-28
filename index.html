@@ -335,12 +335,12 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 
   <!-- Entry mode toggle -->
   <div class="tab-bar" style="margin-bottom:1rem;">
-    <button class="tab active" id="mode-ai-btn" onclick="switchEntryMode('ai',this)">📸 AI Screenshot</button>
-    <button class="tab" id="mode-manual-btn" onclick="switchEntryMode('manual',this)">✏️ Manual Entry</button>
+    <button class="tab active" id="mode-ai-btn" onclick="switchEntryMode('ai',this)" style="display:none;">📸 AI Screenshot</button>
+    <button class="tab active" id="mode-manual-btn" onclick="switchEntryMode('manual',this)">✏️ Manual Entry</button>
   </div>
 
   <!-- AI Screenshot mode -->
-  <div id="entry-mode-ai">
+  <div id="entry-mode-ai" style="display:none;">
     <div class="card" style="margin-bottom:12px;">
       <div class="section-title">Select match</div>
       <select id="result-match-select" style="margin-bottom:12px;" onchange="updateResultFeeHint()"></select>
@@ -402,7 +402,7 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
   </div>
 
   <!-- Manual Entry mode -->
-  <div id="entry-mode-manual" style="display:none;">
+  <div id="entry-mode-manual">
     <div class="card" style="margin-bottom:12px;">
       <div class="section-title">Select match</div>
       <select id="manual-match-select" style="margin-bottom:12px;" onchange="updateManualFeeHint()"></select>
@@ -1041,9 +1041,10 @@ async function handleScreenshot(input) {
     notif.style.display='block';
     const playerNames = players.map(p=>p.name).join(', ');
     try {
+      const apiKey = appSettings.anthropicKey || '';
       const response = await fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',
-        headers:{'Content-Type':'application/json'},
+        headers:{'Content-Type':'application/json', ...(apiKey?{'x-api-key':apiKey,'anthropic-version':'2023-06-01'}:{})},
         body:JSON.stringify({
           model:'claude-sonnet-4-20250514',
           max_tokens:1000,
@@ -1062,7 +1063,12 @@ async function handleScreenshot(input) {
       notif.className='notification notif-success';
       setTimeout(()=>notif.style.display='none',2500);
     } catch(err) {
-      notif.textContent='Could not read screenshot. Please check the image and try again.';
+      console.error('Screenshot error:', err);
+      const isApiKey = !appSettings.anthropicKey;
+      notif.textContent = isApiKey
+        ? '⚠️ Anthropic API key not set. Add it in ⚙️ Settings to use AI screenshot reading.'
+        : 'Could not read screenshot: ' + (err.message || 'Unknown error. Check console.');
+      notif.className = 'notification notif-info';
       document.getElementById('ai-loading-card').style.display='none';
     }
   };
@@ -1309,6 +1315,7 @@ function confirmResults() {
   aiResults = null;
   renderSeason();
   refreshLedger();
+  populateResultMatchDropdowns();
   saveState();
 }
 
@@ -1454,7 +1461,7 @@ function showSection(id,btn) {
   if(id==='whatsapp') { renderWaReminders(); renderWaPlayers(); }
   if(id==='settings') renderSettingsForm();
   if(id==='ledger') refreshLedger();
-  if(id==='results') { populateResultMatchDropdowns(); updateResultFeeHint(); updateManualFeeHint(); populateManualPlayerDropdowns(); }
+  if(id==='results') { populateResultMatchDropdowns(); updateResultFeeHint(); updateManualFeeHint(); populateManualPlayerDropdowns(); switchEntryMode('manual', document.getElementById('mode-manual-btn')); }
 }
 
 function switchTab(tab,btn,group) {
@@ -1877,11 +1884,21 @@ function switchEntryMode(mode, btn) {
 }
 
 function populateResultMatchDropdowns() {
-  const opts = iplSchedule.map((m, i) =>
-    `<option value="${i}">${m.teams} — ${m.date} ${m.time}</option>`
-  ).join('');
-  document.getElementById('result-match-select').innerHTML = opts;
-  document.getElementById('manual-match-select').innerHTML = opts;
+  getActiveMatchIdx();
+  const playedNames = new Set(savedResults.map(r => r.matchName));
+  const opts = iplSchedule.map((m, i) => {
+    const played = playedNames.has(m.teams);
+    return `<option value="${i}" ${played?'disabled style="color:#444;"':''}>${played?'✓ ':''} ${m.teams} — ${m.date} ${m.time}</option>`;
+  }).join('');
+  const ai = document.getElementById('result-match-select');
+  const manual = document.getElementById('manual-match-select');
+  ai.innerHTML = opts;
+  manual.innerHTML = opts;
+  // Default to next unplayed match
+  ai.value = activeMatchIdx;
+  manual.value = activeMatchIdx;
+  updateResultFeeHint();
+  updateManualFeeHint();
 }
 
 function populateManualPlayerDropdowns() {
@@ -1989,6 +2006,7 @@ function confirmManualResults() {
   setTimeout(()=>notif.style.display='none', 2500);
   renderSeason();
   refreshLedger();
+  populateResultMatchDropdowns();
   saveState();
 }
 
@@ -2179,6 +2197,7 @@ function ledNotif(msg, success=true) {
 const SETTINGS_KEY = 'ipl_fantasy_settings';
 let appSettings = {
   waPhoneId: '', waToken: '', waTestNum: '', upi: '', adminName: '',
+  anthropicKey: '',
   firebaseConfig: null,
   tplMorning: `🏏 Match day! {teams}\n📅 {date} · {time}\n💰 Entry: ₹{fee} — pay to {upi}\n⏰ Pick your Dream11 team before toss!`,
   tplFinal:   `⚠️ Last chance! {teams} starts in 30 mins.\nUnpaid: {unpaid}\nPay now or you'll be marked as debt 📋`,
@@ -2284,6 +2303,7 @@ function renderSettingsForm() {
   set('cfg-fb-authdomain', fb.authDomain);
   set('cfg-fb-projectid', fb.projectId);
   set('cfg-fb-appid', fb.appId);
+  set('cfg-anthropic-key', appSettings.anthropicKey);
   updateFbStatusBanner();
 }
 
@@ -2516,8 +2536,19 @@ function saveTpl(type) {
     <button class="btn-primary" onclick="saveSettings()">Save</button>
   </div>
 
+  <!-- Anthropic API Key -->
+  <div class="card" style="margin-bottom:10px;display:none;">
+    <div class="section-title">🤖 AI Screenshot Reading</div>
+    <div style="font-size:12px;color:#666;margin-bottom:14px;line-height:1.6;">
+      Required for reading Dream11 screenshots automatically. Get your key from
+      <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#5b8dee;">console.anthropic.com</a>.
+    </div>
+    <div style="margin-bottom:14px;"><div class="label">Anthropic API Key</div><input type="password" id="cfg-anthropic-key" placeholder="sk-ant-..."></div>
+    <button class="btn-primary" onclick="saveSettings()">Save</button>
+  </div>
+
   <!-- WhatsApp API -->
-  <div class="card" style="margin-bottom:10px;">
+  <div class="card" style="margin-bottom:10px;display:none;">
     <div class="section-title">📱 WhatsApp Business API</div>
     <div style="font-size:12px;color:#666;margin-bottom:14px;line-height:1.6;">
       From <a href="https://developers.facebook.com/apps/" target="_blank" style="color:#5b8dee;">Meta Developer Console</a> → Your App → WhatsApp → API Setup.
