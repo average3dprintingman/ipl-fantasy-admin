@@ -114,6 +114,27 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 .modal-field label { display:block; font-size:12px; color:#555; margin-bottom:4px; }
 .modal-footer { display:flex; gap:8px; margin-top:1rem; }
 </style>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    window._fbReady = false;
+    window._fbInit = function(cfg) {
+      try {
+        const app = initializeApp(cfg);
+        const db  = getFirestore(app);
+        const ref = doc(db, 'ipl2026', 'state');
+        window._fbSave = async (data) => {
+          try { await setDoc(ref, data); return true; }
+          catch(e) { console.warn('FB save failed', e); return false; }
+        };
+        window._fbListen = (cb) => onSnapshot(ref, snap => { if(snap.exists()) cb(snap.data()); });
+        window._fbLoad   = async () => { try { const s = await getDoc(ref); return s.exists()?s.data():null; } catch(e){ return null; } };
+        window._fbReady  = true;
+        console.log('Firebase ready');
+      } catch(e) { console.warn('Firebase init failed', e); }
+    };
+  </script>
 </head>
 <body>
 <div class="app">
@@ -1312,23 +1333,47 @@ function initLedger() {
 
 // == PERSISTENCE ==
 const SAVE_KEY = 'ipl_fantasy_2026';
+let _saveTimer = null;
 
-function saveState() {
-  const state = {
+function applyState(state) {
+  if (state.players)        players       = state.players;
+  if (state.matchPayments)  matchPayments = state.matchPayments;
+  if (state.savedResults)   savedResults  = state.savedResults;
+  if (state.seasonStats)    seasonStats   = state.seasonStats;
+  if (state.ledger)         ledger        = state.ledger;
+  if (state.iplScheduleFees) state.iplScheduleFees.forEach((fee, i) => { if (iplSchedule[i]) iplSchedule[i].fee = fee; });
+}
+
+function setSaveIndicator(text, color) {
+  const el = document.getElementById('save-indicator');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = color || '#4caf72';
+  if (color === '#4caf72') setTimeout(() => { el.style.color = '#555'; }, 2000);
+}
+
+function buildStateObj() {
+  return {
     players, matchPayments, savedResults, seasonStats, ledger,
     iplScheduleFees: iplSchedule.map(m => m.fee),
     savedAt: new Date().toISOString()
   };
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-    const el = document.getElementById('save-indicator');
-    if (el) {
-      const t = new Date();
-      el.textContent = 'Saved ' + t.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
-      el.style.color = '#4caf72';
-      setTimeout(() => { el.style.color = '#555'; }, 2000);
+}
+
+function saveState() {
+  const state = buildStateObj();
+  // Always save locally as fallback
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e) {}
+  // Debounce Firebase writes (max once per 1.5s)
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    if (window._fbReady && window._fbSave) {
+      const ok = await window._fbSave(state);
+      setSaveIndicator(ok ? 'Synced ✓' : 'Saved locally', ok ? '#4caf72' : '#e09436');
+    } else {
+      setSaveIndicator('Saved locally', '#4caf72');
     }
-  } catch(e) { console.warn('Save failed:', e); }
+  }, 1500);
 }
 
 function loadState() {
@@ -1336,19 +1381,45 @@ function loadState() {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return false;
     const state = JSON.parse(raw);
-    if (state.players) players = state.players;
-    if (state.matchPayments) matchPayments = state.matchPayments;
-    if (state.savedResults) savedResults = state.savedResults;
-    if (state.seasonStats) seasonStats = state.seasonStats;
-    if (state.ledger) ledger = state.ledger;
-    if (state.iplScheduleFees) state.iplScheduleFees.forEach((fee, i) => { if (iplSchedule[i]) iplSchedule[i].fee = fee; });
-    const el = document.getElementById('save-indicator');
-    if (el && state.savedAt) {
+    applyState(state);
+    if (state.savedAt) {
       const d = new Date(state.savedAt);
-      el.textContent = 'Last saved ' + d.toLocaleDateString('en-IN', {day:'numeric', month:'short'}) + ' ' + d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+      setSaveIndicator('Local: ' + d.toLocaleDateString('en-IN', {day:'numeric', month:'short'}) + ' ' + d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}), '#555');
     }
     return true;
   } catch(e) { console.warn('Load failed:', e); return false; }
+}
+
+async function loadFromFirebase() {
+  if (!window._fbReady || !window._fbLoad) return false;
+  setSaveIndicator('Syncing...', '#5b8dee');
+  const state = await window._fbLoad();
+  if (!state) { setSaveIndicator('No cloud data yet', '#555'); return false; }
+  // Use whichever is newer — Firebase or localStorage
+  const fbTime    = state.savedAt    ? new Date(state.savedAt).getTime()    : 0;
+  const localRaw  = localStorage.getItem(SAVE_KEY);
+  const localTime = localRaw ? new Date(JSON.parse(localRaw).savedAt||0).getTime() : 0;
+  if (fbTime >= localTime) {
+    applyState(state);
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e) {}
+    setSaveIndicator('Synced ✓', '#4caf72');
+  } else {
+    setSaveIndicator('Using local (newer)', '#555');
+  }
+  return true;
+}
+
+function startFirebaseListen() {
+  if (!window._fbReady || !window._fbListen) return;
+  window._fbListen((state) => {
+    // Only apply if this came from another device (different savedAt than what we just wrote)
+    const current = buildStateObj();
+    if (state.savedAt && state.savedAt !== current.savedAt) {
+      applyState(state);
+      renderAll();
+      setSaveIndicator('Synced ✓', '#4caf72');
+    }
+  });
 }
 
 function exportBackup() {
@@ -1396,10 +1467,19 @@ function renderAll() {
   updateManualFeeHint(); initLedger(); refreshLedger(); renderWaReminders();
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
   loadSettings();
-  loadState();
+  loadState();     // Load local data immediately so UI isn't blank
   renderAll();
+  // Then try Firebase — init if credentials saved, then load cloud data
+  const fbCfg = appSettings.firebaseConfig;
+  if (fbCfg && fbCfg.apiKey) {
+    window._fbInit(fbCfg);
+    await new Promise(r => setTimeout(r, 600)); // let SDK init
+    await loadFromFirebase();
+    renderAll();
+    startFirebaseListen();
+  }
 });
 
 function selectPreset(amt) {
@@ -1899,6 +1979,7 @@ function ledNotif(msg, success=true) {
 const SETTINGS_KEY = 'ipl_fantasy_settings';
 let appSettings = {
   waPhoneId: '', waToken: '', waTestNum: '', upi: '', adminName: '',
+  firebaseConfig: null,
   tplMorning: `🏏 Match day! {teams}\n📅 {date} · {time}\n💰 Entry: ₹{fee} — pay to {upi}\n⏰ Pick your Dream11 team before toss!`,
   tplFinal:   `⚠️ Last chance! {teams} starts in 30 mins.\nUnpaid: {unpaid}\nPay now or you'll be marked as debt 📋`,
   tplResults: `🏆 {teams} Results!\n🥇 {winner1} — {pts1} pts → +₹{prize1}\n🥈 {winner2} — {pts2} pts → +₹{prize2}\n\nBetter luck next match! 💪`
@@ -1911,16 +1992,82 @@ function loadSettings() {
   } catch(e) {}
 }
 
-function saveSettings() {
-  appSettings.waPhoneId  = document.getElementById('cfg-phone-id')?.value.trim() || appSettings.waPhoneId;
-  appSettings.waToken    = document.getElementById('cfg-token')?.value.trim()    || appSettings.waToken;
-  appSettings.waTestNum  = document.getElementById('cfg-test-num')?.value.trim() || appSettings.waTestNum;
-  appSettings.upi        = document.getElementById('cfg-upi')?.value.trim()       || appSettings.upi;
-  appSettings.adminName  = document.getElementById('cfg-admin-name')?.value.trim()|| appSettings.adminName;
+async function saveSettings() {
+  const g = id => document.getElementById(id)?.value.trim() || '';
+  appSettings.waPhoneId   = g('cfg-phone-id')     || appSettings.waPhoneId;
+  appSettings.waToken     = g('cfg-token')         || appSettings.waToken;
+  appSettings.waTestNum   = g('cfg-test-num')      || appSettings.waTestNum;
+  appSettings.upi         = g('cfg-upi')           || appSettings.upi;
+  appSettings.adminName   = g('cfg-admin-name')    || appSettings.adminName;
+  const fbApiKey     = g('cfg-fb-apikey');
+  const fbAuthDomain = g('cfg-fb-authdomain');
+  const fbProjectId  = g('cfg-fb-projectid');
+  const fbAppId      = g('cfg-fb-appid');
+  if (fbApiKey && fbProjectId) {
+    appSettings.firebaseConfig = { apiKey:fbApiKey, authDomain:fbAuthDomain, projectId:fbProjectId, appId:fbAppId };
+  }
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings)); } catch(e) {}
   const n = document.getElementById('cfg-notif');
-  n.textContent = '✅ Settings saved!'; n.className = 'notification notif-success'; n.style.display = 'block';
-  setTimeout(() => n.style.display = 'none', 2000);
+  // Try to init / reinit Firebase with new config
+  if (appSettings.firebaseConfig?.apiKey) {
+    window._fbReady = false;
+    window._fbInit(appSettings.firebaseConfig);
+    await new Promise(r => setTimeout(r, 800));
+    if (window._fbReady) {
+      n.textContent = '✅ Saved & connected to Firebase!';
+      n.className = 'notification notif-success'; n.style.display = 'block';
+      updateFbStatusBanner();
+      await loadFromFirebase();
+      renderAll();
+      startFirebaseListen();
+    } else {
+      n.textContent = '⚠️ Saved but Firebase connection failed. Check your config.';
+      n.className = 'notification notif-info'; n.style.display = 'block';
+    }
+  } else {
+    n.textContent = '✅ Settings saved!';
+    n.className = 'notification notif-success'; n.style.display = 'block';
+  }
+  setTimeout(() => n.style.display = 'none', 3000);
+}
+
+function updateFbStatusBanner() {
+  const banner = document.getElementById('fb-status-banner');
+  const text   = document.getElementById('fb-status-text');
+  if (!banner || !text) return;
+  if (window._fbReady) {
+    banner.style.background = '#0d2e18'; banner.style.borderColor = '#1a5c30';
+    text.innerHTML = '✅ <strong style="color:#4caf72;">Connected</strong> <span style="color:#888;">— data syncs across all your devices in real time.</span>';
+  } else if (appSettings.firebaseConfig?.apiKey) {
+    banner.style.background = '#2e1f05'; banner.style.borderColor = '#5a3a10';
+    text.innerHTML = '⚠️ <span style="color:#e09436;">Config saved but not connected.</span> <span style="color:#888;">Hit Save & connect again.</span>';
+  } else {
+    banner.style.background = '#1a1a1a'; banner.style.borderColor = '#2a2a2a';
+    text.innerHTML = '<span style="color:#555;">Not configured — data saves locally only.</span>';
+  }
+}
+
+async function forceSyncToCloud() {
+  if (!window._fbReady) { alert('Firebase not connected. Save your config first.'); return; }
+  const ok = await window._fbSave(buildStateObj());
+  const n = document.getElementById('cfg-notif');
+  n.textContent = ok ? '✅ Pushed to cloud!' : '❌ Push failed. Check console.';
+  n.className = 'notification ' + (ok ? 'notif-success' : 'notif-info');
+  n.style.display = 'block';
+  setTimeout(() => n.style.display = 'none', 2500);
+}
+
+async function forceSyncFromCloud() {
+  if (!window._fbReady) { alert('Firebase not connected. Save your config first.'); return; }
+  const state = await window._fbLoad();
+  if (!state) { alert('No data found in cloud.'); return; }
+  applyState(state);
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e) {}
+  renderAll();
+  const n = document.getElementById('cfg-notif');
+  n.textContent = '✅ Pulled from cloud!';
+  n.className = 'notification notif-success'; n.style.display = 'block';
+  setTimeout(() => n.style.display = 'none', 2500);
 }
 
 function goToSettings() { showSection('settings', null); }
@@ -1932,6 +2079,12 @@ function renderSettingsForm() {
   set('cfg-test-num', appSettings.waTestNum);
   set('cfg-upi', appSettings.upi);
   set('cfg-admin-name', appSettings.adminName);
+  const fb = appSettings.firebaseConfig || {};
+  set('cfg-fb-apikey', fb.apiKey);
+  set('cfg-fb-authdomain', fb.authDomain);
+  set('cfg-fb-projectid', fb.projectId);
+  set('cfg-fb-appid', fb.appId);
+  updateFbStatusBanner();
 }
 
 async function testWaApi() {
@@ -2132,53 +2285,63 @@ function saveTpl(type) {
 
 <!-- SETTINGS -->
 <div id="sec-settings" class="section">
+
+  <!-- Firebase Sync -->
   <div class="card" style="margin-bottom:10px;">
-    <div class="section-title">WhatsApp Business API</div>
-    <div style="font-size:12px;color:#666;margin-bottom:14px;line-height:1.6;">
-      Required to send messages directly from this app. Get these from
-      <a href="https://developers.facebook.com/apps/" target="_blank" style="color:#5b8dee;">Meta Developer Console</a>
-      → Your App → WhatsApp → API Setup.
+    <div class="section-title">☁️ Firebase sync</div>
+    <div id="fb-status-banner" style="padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:14px;background:#1a1a1a;border:0.5px solid #2a2a2a;">
+      <span id="fb-status-text" style="color:#555;">Not configured</span>
     </div>
-    <div style="margin-bottom:10px;">
-      <div class="label">Phone Number ID</div>
-      <input type="text" id="cfg-phone-id" placeholder="e.g. 123456789012345">
+    <div style="font-size:12px;color:#666;margin-bottom:14px;line-height:1.8;">
+      Get your config from <a href="https://console.firebase.google.com" target="_blank" style="color:#5b8dee;">console.firebase.google.com</a>
+      → Your project → Project settings → Your apps → Web app → SDK setup → Config object.
     </div>
-    <div style="margin-bottom:10px;">
-      <div class="label">Access Token</div>
-      <input type="text" id="cfg-token" placeholder="EAAxxxxx...">
-    </div>
-    <div style="margin-bottom:14px;">
-      <div class="label">Test number (to verify setup)</div>
-      <input type="text" id="cfg-test-num" placeholder="91XXXXXXXXXX">
-    </div>
+    <div style="margin-bottom:10px;"><div class="label">API Key</div><input type="text" id="cfg-fb-apikey" placeholder="AIzaSy..."></div>
+    <div style="margin-bottom:10px;"><div class="label">Auth Domain</div><input type="text" id="cfg-fb-authdomain" placeholder="your-app.firebaseapp.com"></div>
+    <div style="margin-bottom:10px;"><div class="label">Project ID</div><input type="text" id="cfg-fb-projectid" placeholder="your-app-id"></div>
+    <div style="margin-bottom:14px;"><div class="label">App ID</div><input type="text" id="cfg-fb-appid" placeholder="1:123456:web:abcdef"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn-primary" onclick="saveSettings()">Save credentials</button>
-      <button class="btn-secondary" onclick="testWaApi()">Send test message</button>
+      <button class="btn-primary" onclick="saveSettings()">Save & connect</button>
+      <button class="btn-secondary" onclick="forceSyncToCloud()">⬆ Push local → cloud</button>
+      <button class="btn-secondary" onclick="forceSyncFromCloud()">⬇ Pull cloud → local</button>
     </div>
     <div class="notification" id="cfg-notif" style="margin-top:10px;"></div>
   </div>
+
+  <!-- Payment details -->
   <div class="card" style="margin-bottom:10px;">
-    <div class="section-title">Payment details</div>
-    <div style="margin-bottom:10px;">
-      <div class="label">Your UPI ID</div>
-      <input type="text" id="cfg-upi" placeholder="yourname@upi">
-    </div>
-    <div style="margin-bottom:14px;">
-      <div class="label">Your name (shown in messages)</div>
-      <input type="text" id="cfg-admin-name" placeholder="e.g. Rahul">
-    </div>
+    <div class="section-title">💰 Payment details</div>
+    <div style="margin-bottom:10px;"><div class="label">Your UPI ID</div><input type="text" id="cfg-upi" placeholder="yourname@upi"></div>
+    <div style="margin-bottom:14px;"><div class="label">Your name (shown in messages)</div><input type="text" id="cfg-admin-name" placeholder="e.g. Rahul"></div>
     <button class="btn-primary" onclick="saveSettings()">Save</button>
   </div>
+
+  <!-- WhatsApp API -->
+  <div class="card" style="margin-bottom:10px;">
+    <div class="section-title">📱 WhatsApp Business API</div>
+    <div style="font-size:12px;color:#666;margin-bottom:14px;line-height:1.6;">
+      From <a href="https://developers.facebook.com/apps/" target="_blank" style="color:#5b8dee;">Meta Developer Console</a> → Your App → WhatsApp → API Setup.
+    </div>
+    <div style="margin-bottom:10px;"><div class="label">Phone Number ID</div><input type="text" id="cfg-phone-id" placeholder="e.g. 123456789012345"></div>
+    <div style="margin-bottom:10px;"><div class="label">Access Token</div><input type="text" id="cfg-token" placeholder="EAAxxxxx..."></div>
+    <div style="margin-bottom:14px;"><div class="label">Test number</div><input type="text" id="cfg-test-num" placeholder="91XXXXXXXXXX"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-primary" onclick="saveSettings()">Save</button>
+      <button class="btn-secondary" onclick="testWaApi()">Send test message</button>
+    </div>
+  </div>
+
+  <!-- Firebase setup guide -->
   <div class="card">
-    <div class="section-title">How to set up WhatsApp Business API</div>
-    <div style="font-size:13px;color:#888;line-height:1.8;">
-      1. Go to <a href="https://developers.facebook.com" target="_blank" style="color:#5b8dee;">developers.facebook.com</a> and create an app<br>
-      2. Add the <strong style="color:#ccc;">WhatsApp</strong> product to your app<br>
-      3. Under <strong style="color:#ccc;">API Setup</strong>, note your Phone Number ID<br>
-      4. Generate a <strong style="color:#ccc;">Temporary Access Token</strong> (or permanent via System User)<br>
-      5. Add your players numbers as recipients in the Meta console (test mode)<br>
-      6. Paste the credentials above and hit Save<br><br>
-      <span style="color:#555;">Free tier: 1,000 messages/month. Enough for a full IPL season.</span>
+    <div class="section-title">How to set up Firebase (5 mins)</div>
+    <div style="font-size:13px;color:#888;line-height:1.9;">
+      1. Go to <a href="https://console.firebase.google.com" target="_blank" style="color:#5b8dee;">console.firebase.google.com</a> → <strong style="color:#ccc;">Add project</strong><br>
+      2. Skip Google Analytics → <strong style="color:#ccc;">Create project</strong><br>
+      3. Click the <strong style="color:#ccc;">&lt;/&gt; Web</strong> icon → Register app → copy the <strong style="color:#ccc;">firebaseConfig</strong> values<br>
+      4. In the left menu → <strong style="color:#ccc;">Build → Firestore Database → Create database</strong><br>
+      5. Choose <strong style="color:#ccc;">Start in test mode</strong> → pick any region → Done<br>
+      6. Paste the config values above → <strong style="color:#ccc;">Save & connect</strong><br><br>
+      <span style="color:#555;">Free tier: 50k reads + 20k writes/day. More than enough for a full season.</span>
     </div>
   </div>
 </div>
