@@ -153,13 +153,13 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 
 <div class="nav">
   <button class="nav-btn active" onclick="showSection('dashboard',this)">Dashboard</button>
+  <button class="nav-btn" onclick="showSection('ledger',this)">Ledger</button>
   <button class="nav-btn" onclick="showSection('matches',this)">Matches</button>
   <button class="nav-btn" onclick="showSection('payments',this)">Payments</button>
   <button class="nav-btn" onclick="showSection('results',this)">Results</button>
-  <button class="nav-btn" onclick="showSection('whatsapp',this)">WhatsApp</button>
+  <button class="nav-btn" onclick="showSection('whatsapp',this)" style="display:none;">WhatsApp</button>
   <button class="nav-btn" onclick="showSection('players',this)">Players</button>
   <button class="nav-btn" onclick="showSection('season',this)">Season</button>
-  <button class="nav-btn" onclick="showSection('ledger',this)">Credits</button>
   <button class="nav-btn" onclick="showSection('settings',this)">⚙️ Settings</button>
 </div>
 
@@ -647,6 +647,15 @@ let players = [];
 let matchPayments = {};
 let aiResults = null;
 let activeMatchIdx = 0;
+
+// Derive next unplayed match index from savedResults
+// savedResults stores matchName; we match against iplSchedule
+function getActiveMatchIdx() {
+  const playedNames = new Set(savedResults.map(r => r.matchName));
+  const idx = iplSchedule.findIndex(m => !playedNames.has(m.teams));
+  activeMatchIdx = idx >= 0 ? idx : iplSchedule.length - 1;
+  return activeMatchIdx;
+}
 let savedResults = [];
 
 let iplSchedule = [
@@ -731,10 +740,11 @@ function renderPastMatches() {
 }
 
 function renderDashboard() {
+  getActiveMatchIdx();
   const totalMatches = iplSchedule.length;
   const played = savedResults.length;
   const remaining = totalMatches - played;
-  const nextMatch = iplSchedule[0];
+  const nextMatch = iplSchedule[activeMatchIdx] || iplSchedule[iplSchedule.length-1];
   const pool = players.length * nextMatch.fee;
   const prize1 = Math.round(pool * PRIZE_SPLIT[0]);
   const prize2 = Math.round(pool * PRIZE_SPLIT[1]);
@@ -895,8 +905,11 @@ function renderDashboard() {
 }
 
 function renderDashUpcoming() {
-  document.getElementById('dash-upcoming').innerHTML = iplSchedule.slice(0,3).map((m,i) => {
-    const payments = matchPayments[i] || {};
+  getActiveMatchIdx();
+  const upcomingSlice = iplSchedule.slice(activeMatchIdx, activeMatchIdx+3);
+  document.getElementById('dash-upcoming').innerHTML = upcomingSlice.map((m,i) => {
+    const matchI = activeMatchIdx + i;
+    const payments = matchPayments[matchI] || {};
     const paidCount = players.length ? Object.values(payments).filter(v=>v===true).length : 0;
     const badgeText = i===0 ? `${paidCount}/${players.length} paid` : 'Upcoming';
     return `<div class="match-item">
@@ -910,23 +923,51 @@ function renderDashUpcoming() {
 }
 
 function renderMatches() {
-  const upcomingHTML = (list, offset) => list.map((m,i) => `
-    <div class="match-item">
+  getActiveMatchIdx();
+  const playedNames = new Set(savedResults.map(r => r.matchName));
+
+  // Upcoming: only unplayed matches, up to 6
+  const upcomingMatches = iplSchedule
+    .map((m, idx) => ({ m, idx }))
+    .filter(({ m }) => !playedNames.has(m.teams))
+    .slice(0, 6);
+
+  if (upcomingMatches.length === 0) {
+    document.getElementById('upcoming-list').innerHTML = '<div style="text-align:center;padding:2rem;font-size:13px;color:#666;">All matches played! 🏆</div>';
+  } else {
+    document.getElementById('upcoming-list').innerHTML = upcomingMatches.map(({ m, idx }) => `
+      <div class="match-item">
+        <div style="flex:1;">
+          <div class="match-teams">${m.teams}</div>
+          <div class="match-meta">${m.date} · ${m.time} · ${m.venue}</div>
+          ${feePanelHTML(idx)}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          ${feeChipHTML(idx)}
+          <span class="badge badge-info" style="font-size:10px;">M${idx+1}</span>
+        </div>
+      </div>`).join('');
+  }
+
+  // All IPL: full schedule with played/upcoming indicator
+  document.getElementById('all-matches-list').innerHTML = iplSchedule.map((m, idx) => {
+    const played = playedNames.has(m.teams);
+    return `<div class="match-item">
       <div style="flex:1;">
-        <div class="match-teams">${m.teams}</div>
+        <div class="match-teams" style="color:${played?'#555':'#e8e8e8'};">${m.teams}</div>
         <div class="match-meta">${m.date} · ${m.time} · ${m.venue}</div>
-        ${feePanelHTML(i+offset)}
+        ${!played ? feePanelHTML(idx) : ''}
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-        ${feeChipHTML(i+offset)}
-        <span class="badge badge-info" style="font-size:10px;">M${i+offset+4}</span>
+        ${!played ? feeChipHTML(idx) : ''}
+        <span class="badge ${played?'badge-success':'badge-info'}" style="font-size:10px;">${played?'Done':'M'+(idx+1)}</span>
       </div>
-    </div>`).join('');
-  document.getElementById('upcoming-list').innerHTML = upcomingHTML(iplSchedule.slice(0,6), 0);
-  document.getElementById('all-matches-list').innerHTML = upcomingHTML(iplSchedule, 0);
+    </div>`;
+  }).join('');
 }
 
 function renderPayments() {
+  getActiveMatchIdx();
   const m = iplSchedule[activeMatchIdx];
   const payments = matchPayments[activeMatchIdx] || {};
   const paidCount = Object.values(payments).filter(v=>v===true).length;
@@ -1567,6 +1608,7 @@ function importBackup(input) {
 }
 
 function renderAll() {
+  getActiveMatchIdx();
   renderDashboard(); renderMatches(); renderPayments(); renderPlayers();
   renderSeason(); populateResultMatchDropdowns(); updateResultFeeHint();
   updateManualFeeHint(); initLedger(); refreshLedger(); renderWaReminders();
