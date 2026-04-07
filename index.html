@@ -25,6 +25,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .badge-warning { background: #2e1f05; color: #e09436; }
 .badge-danger { background: #2e0d0d; color: #e05555; }
 .badge-info { background: #0d1f3e; color: #5b8dee; }
+.badge-cancelled { background: #2e1f05; color: #e07a35; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
 .section-title { font-size: 12px; font-weight: 500; color: #555; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -245,11 +246,11 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
       <div id="dash-prize-split-match" style="font-size:12px;color:#666;margin-bottom:8px;">—</div>
       <div style="display:flex;gap:8px;">
         <div style="flex:1;background:#2a1e08;border-radius:8px;padding:8px 10px;text-align:center;">
-          <div style="font-size:10px;color:#c8884a;margin-bottom:2px;">🥇 1st (70%)</div>
+          <div style="font-size:10px;color:#c8884a;margin-bottom:2px;">🥇 1st (65%)</div>
           <div style="font-weight:600;font-size:15px;color:#FAC775;" id="dash-prize1">₹0</div>
         </div>
         <div style="flex:1;background:#242424;border-radius:8px;padding:8px 10px;text-align:center;">
-          <div style="font-size:10px;color:#666;margin-bottom:2px;">🥈 2nd (30%)</div>
+          <div style="font-size:10px;color:#666;margin-bottom:2px;">🥈 2nd (35%)</div>
           <div style="font-weight:600;font-size:15px;color:#555;" id="dash-prize2">₹0</div>
         </div>
       </div>
@@ -490,6 +491,7 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
       </div>
     </div>
     <button class="btn-primary" style="width:100%;" onclick="previewManualResults()">Preview payouts</button>
+    <button id="cancel-match-btn" class="btn-secondary" style="width:100%;margin-top:8px;border-color:#5a2a10;color:#e07a35;" onclick="cancelMatch()">🌧️ Cancel match (rain / no result)</button>
   </div>
 
   </div><!-- end result-tab-new -->
@@ -637,8 +639,8 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 </div>
 
 <script>
-const PRIZE_SPLIT = [0.70, 0.30];
-const PRIZE_SPLIT_3 = [0.60, 0.30, 0.10]; // default 3-winner split
+const PRIZE_SPLIT = [0.65, 0.35];
+const PRIZE_SPLIT_3 = [0.50, 0.35, 0.15];
 let _editWinners = { ai: 2, manual: 2 }; // current winner count per mode
 const FEE_PRESETS = [50, 100, 200, 500];
 
@@ -662,7 +664,7 @@ let iplSchedule = [
   { date:'Mar 28', teams:'RCB vs SRH', time:'7:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
   { date:'Mar 29', teams:'MI vs KKR', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
   { date:'Mar 30', teams:'RR vs CSK', time:'7:30 PM', venue:'ACA Stadium, Guwahati', fee:100 },
-  { date:'Mar 31', teams:'PBKS vs GT', time:'7:30 PM', venue:'New PCA Stadium, Chandigarh', fee:100 },
+  { date:'Mar 31', teams:'PBKS vs GT', time:'7:30 PM', venue:'New PCA Stadium, Mullanpur', fee:100 },
   { date:'Apr 1', teams:'LSG vs DC', time:'7:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
   { date:'Apr 2', teams:'KKR vs SRH', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
   { date:'Apr 3', teams:'CSK vs PBKS', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
@@ -672,54 +674,116 @@ let iplSchedule = [
   { date:'Apr 5', teams:'RCB vs CSK', time:'7:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
   { date:'Apr 6', teams:'KKR vs PBKS', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
   { date:'Apr 7', teams:'RR vs MI', time:'7:30 PM', venue:'ACA Stadium, Guwahati', fee:100 },
-  { date:'Apr 8', teams:'DC vs GT', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
-  { date:'Apr 9', teams:'KKR vs LSG', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
-  { date:'Apr 10', teams:'RR vs RCB', time:'7:30 PM', venue:'ACA Stadium, Guwahati', fee:100 },
-  { date:'Apr 11', teams:'PBKS vs SRH', time:'3:30 PM', venue:'New PCA Stadium, Chandigarh', fee:100 },
-  { date:'Apr 11', teams:'CSK vs DC', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
-  { date:'Apr 12', teams:'LSG vs GT', time:'3:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
-  { date:'Apr 12', teams:'MI vs RCB', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
+  { date:'Apr 8', teams:'DC vs LSG', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
+  { date:'Apr 9', teams:'KKR vs RCB', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
+  { date:'Apr 10', teams:'RR vs SRH', time:'7:30 PM', venue:'ACA Stadium, Guwahati', fee:100 },
+  { date:'Apr 11', teams:'PBKS vs DC', time:'3:30 PM', venue:'New PCA Stadium, Mullanpur', fee:100 },
+  { date:'Apr 11', teams:'CSK vs GT', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
+  { date:'Apr 12', teams:'LSG vs RCB', time:'3:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
+  { date:'Apr 12', teams:'MI vs RR', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
+  { date:'Apr 13', teams:'SRH vs KKR', time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
+  { date:'Apr 14', teams:'CSK vs LSG', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
+  { date:'Apr 15', teams:'RCB vs DC', time:'7:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
+  { date:'Apr 16', teams:'MI vs PBKS', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
+  { date:'Apr 17', teams:'GT vs KKR', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
+  { date:'Apr 18', teams:'RCB vs LSG', time:'3:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
+  { date:'Apr 18', teams:'SRH vs CSK', time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
+  { date:'Apr 19', teams:'KKR vs RR', time:'3:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
+  { date:'Apr 19', teams:'PBKS vs LSG', time:'7:30 PM', venue:'New PCA Stadium, Mullanpur', fee:100 },
+  { date:'Apr 20', teams:'GT vs MI', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
+  { date:'Apr 21', teams:'SRH vs DC', time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
+  { date:'Apr 22', teams:'LSG vs RR', time:'7:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
+  { date:'Apr 23', teams:'MI vs CSK', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
+  { date:'Apr 24', teams:'RCB vs GT', time:'7:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
+  { date:'Apr 25', teams:'DC vs PBKS', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
+  { date:'Apr 26', teams:'RR vs SRH', time:'3:30 PM', venue:'Sawai Mansingh Stadium, Jaipur', fee:100 },
+  { date:'Apr 26', teams:'GT vs CSK', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
+  { date:'Apr 27', teams:'LSG vs KKR', time:'3:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
+  { date:'Apr 27', teams:'DC vs RCB', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
+  { date:'Apr 28', teams:'PBKS vs RR', time:'7:30 PM', venue:'HPCA Stadium, Dharamsala', fee:100 },
+  { date:'Apr 29', teams:'MI vs SRH', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
+  { date:'Apr 30', teams:'GT vs RCB', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
+  { date:'May 1', teams:'RR vs DC', time:'7:30 PM', venue:'Sawai Mansingh Stadium, Jaipur', fee:100 },
+  { date:'May 2', teams:'CSK vs MI', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
+  { date:'May 3', teams:'PBKS vs KKR', time:'3:30 PM', venue:'HPCA Stadium, Dharamsala', fee:100 },
+  { date:'May 3', teams:'LSG vs SRH', time:'7:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
+  { date:'May 4', teams:'RCB vs RR', time:'3:30 PM', venue:'Nava Raipur Stadium, Raipur', fee:100 },
+  { date:'May 4', teams:'DC vs CSK', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
+  { date:'May 5', teams:'KKR vs GT', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
+  { date:'May 6', teams:'PBKS vs MI', time:'7:30 PM', venue:'HPCA Stadium, Dharamsala', fee:100 },
+  { date:'May 7', teams:'SRH vs RR', time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
+  { date:'May 8', teams:'DC vs GT', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
+  { date:'May 9', teams:'RR vs LSG', time:'7:30 PM', venue:'Sawai Mansingh Stadium, Jaipur', fee:100 },
+  { date:'May 10', teams:'CSK vs MI', time:'3:30 PM', venue:'Chepauk, Chennai', fee:100 },
+  { date:'May 10', teams:'RCB vs DC', time:'7:30 PM', venue:'Nava Raipur Stadium, Raipur', fee:100 },
+  { date:'May 11', teams:'PBKS vs SRH', time:'7:30 PM', venue:'HPCA Stadium, Dharamsala', fee:100 },
+  { date:'May 12', teams:'GT vs KKR', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
+  { date:'May 13', teams:'RCB vs MI', time:'7:30 PM', venue:'Nava Raipur Stadium, Raipur', fee:100 },
+  { date:'May 14', teams:'PBKS vs CSK', time:'7:30 PM', venue:'HPCA Stadium, Dharamsala', fee:100 },
+  { date:'May 15', teams:'LSG vs GT', time:'7:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
+  { date:'May 16', teams:'KKR vs DC', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
+  { date:'May 17', teams:'SRH vs PBKS', time:'3:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
+  { date:'May 17', teams:'MI vs GT', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
+  { date:'May 18', teams:'CSK vs RCB', time:'3:30 PM', venue:'Chepauk, Chennai', fee:100 },
+  { date:'May 18', teams:'RR vs KKR', time:'7:30 PM', venue:'Sawai Mansingh Stadium, Jaipur', fee:100 },
+  { date:'May 19', teams:'LSG vs PBKS', time:'7:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
+  { date:'May 20', teams:'DC vs SRH', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
+  { date:'May 21', teams:'CSK vs KKR', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
+  { date:'May 22', teams:'RR vs GT', time:'7:30 PM', venue:'Sawai Mansingh Stadium, Jaipur', fee:100 },
+  { date:'May 23', teams:'MI vs LSG', time:'3:30 PM', venue:'Wankhede, Mumbai', fee:100 },
+  { date:'May 23', teams:'DC vs RCB', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
+  { date:'May 24', teams:'PBKS vs CSK', time:'3:30 PM', venue:'New PCA Stadium, Mullanpur', fee:100 },
+  { date:'May 24', teams:'SRH vs MI', time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
+  { date:'May 25', teams:'KKR vs LSG', time:'3:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
+  { date:'May 25', teams:'GT vs RR', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
 ];
 
 let seasonStats = [];
 
-function feeChipHTML(idx) {
-  return `<span class="fee-chip" onclick="toggleFeePanel(${idx})">₹${iplSchedule[idx].fee} <span style="font-size:10px;opacity:0.6;">✎</span></span>`;
+function feeChipHTML(idx, prefix) {
+  const pfx = prefix || '';
+  return `<span class="fee-chip" onclick="toggleFeePanel(${idx},'${pfx}')">₹${iplSchedule[idx].fee} <span style="font-size:10px;opacity:0.6;">✎</span></span>`;
 }
 
-function feePanelHTML(idx) {
+function feePanelHTML(idx, prefix) {
+  const pfx = prefix || '';
   const m = iplSchedule[idx];
-  return `<div class="fee-edit-panel" id="fee-panel-${idx}">
+  return `<div class="fee-edit-panel" id="${pfx}fee-panel-${idx}">
     <div style="font-size:12px;color:#666;margin-bottom:8px;">Set entry fee for this match</div>
-    <div class="fee-presets" id="fee-presets-${idx}">
-      ${FEE_PRESETS.map(f=>`<button class="fee-preset ${m.fee===f?'selected':''}" onclick="selectFeePreset(${idx},${f})">₹${f}</button>`).join('')}
+    <div class="fee-presets" id="${pfx}fee-presets-${idx}">
+      ${FEE_PRESETS.map(f=>`<button class="fee-preset ${m.fee===f?'selected':''}" onclick="selectFeePreset(${idx},${f},'${pfx}')">₹${f}</button>`).join('')}
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <input type="number" id="fee-custom-${idx}" placeholder="Custom amount" value="${!FEE_PRESETS.includes(m.fee)?m.fee:''}" style="flex:1;">
-      <button class="btn-primary btn-sm" onclick="saveFee(${idx})">Save</button>
-      <button class="btn-secondary btn-sm" onclick="toggleFeePanel(${idx})">Cancel</button>
+      <input type="number" id="${pfx}fee-custom-${idx}" placeholder="Custom amount" value="${!FEE_PRESETS.includes(m.fee)?m.fee:''}" style="flex:1;">
+      <button class="btn-primary btn-sm" onclick="saveFee(${idx},'${pfx}')">Save</button>
+      <button class="btn-secondary btn-sm" onclick="toggleFeePanel(${idx},'${pfx}')">Cancel</button>
     </div>
   </div>`;
 }
 
-function toggleFeePanel(idx) {
-  const p = document.getElementById('fee-panel-'+idx);
+function toggleFeePanel(idx, prefix) {
+  const pfx = prefix || '';
+  const p = document.getElementById(pfx+'fee-panel-'+idx);
   if(p) p.classList.toggle('open');
 }
 
-function selectFeePreset(idx, fee) {
+function selectFeePreset(idx, fee, prefix) {
+  const pfx = prefix || '';
   iplSchedule[idx].fee = fee;
-  document.getElementById('fee-custom-'+idx).value = '';
-  document.querySelectorAll(`#fee-presets-${idx} .fee-preset`).forEach(b => {
+  const customEl = document.getElementById(pfx+'fee-custom-'+idx);
+  if(customEl) customEl.value = '';
+  document.querySelectorAll(`#${pfx}fee-presets-${idx} .fee-preset`).forEach(b => {
     b.classList.toggle('selected', parseInt(b.textContent.replace('₹','')) === fee);
   });
 }
 
-function saveFee(idx) {
-  const custom = document.getElementById('fee-custom-'+idx).value;
+function saveFee(idx, prefix) {
+  const pfx = prefix || '';
+  const customEl = document.getElementById(pfx+'fee-custom-'+idx);
+  const custom = customEl ? customEl.value : '';
   if(custom && parseInt(custom)>0) iplSchedule[idx].fee = parseInt(custom);
   renderMatches(); renderDashUpcoming(); updateResultFeeHint(); saveState();
-  const p = document.getElementById('fee-panel-'+idx);
+  const p = document.getElementById(pfx+'fee-panel-'+idx);
   if(p) p.classList.remove('open');
 }
 
@@ -729,20 +793,32 @@ function renderPastMatches() {
     el.innerHTML = '<div style="text-align:center;padding:2rem;font-size:13px;color:#666;">No past matches yet. Confirm results to see them here.</div>';
     return;
   }
-  el.innerHTML = savedResults.map(r => `
-    <div class="match-item">
+  el.innerHTML = savedResults.map(r => {
+    if (r.cancelled) {
+      return `<div class="match-item">
+        <div>
+          <div class="match-teams">${r.matchName}</div>
+          <div class="match-meta">${r.date} · 🌧️ ${r.cancelReason || 'Cancelled'}</div>
+        </div>
+        <span class="badge badge-cancelled">Cancelled</span>
+      </div>`;
+    }
+    return `<div class="match-item">
       <div>
         <div class="match-teams">${r.matchName}</div>
         <div class="match-meta">${r.date} · 🥇 ${r.rank1.name} +₹${r.rank1.prize} · 🥈 ${r.rank2.name} +₹${r.rank2.prize}</div>
       </div>
       <span class="badge badge-success">Done</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderDashboard() {
   getActiveMatchIdx();
   const totalMatches = iplSchedule.length;
   const played = savedResults.length;
+  const cancelledCount = savedResults.filter(r => r.cancelled).length;
+  const playedReal = played - cancelledCount;
   const remaining = totalMatches - played;
   const nextMatch = iplSchedule[activeMatchIdx] || iplSchedule[iplSchedule.length-1];
   const pool = players.length * nextMatch.fee;
@@ -750,7 +826,10 @@ function renderDashboard() {
   const prize2 = Math.round(pool * PRIZE_SPLIT[1]);
 
   // Row 1: key stats
-  document.getElementById('dash-played').textContent = played;
+  document.getElementById('dash-played').textContent = playedReal;
+  if (cancelledCount > 0) {
+    document.getElementById('dash-played').innerHTML = playedReal + '<span style="font-size:12px;color:#e07a35;"> +' + cancelledCount + '🌧️</span>';
+  }
   const seasonPool = savedResults.reduce((s,r)=>s+r.pool,0);
   document.getElementById('dash-pool').textContent = '₹' + seasonPool;
   initLedger();
@@ -801,21 +880,28 @@ function renderDashboard() {
   if(savedResults.length > 0) {
     const lr = savedResults[0];
     document.getElementById('dash-last-result-match').textContent = lr.matchName + ' · ' + lr.date;
-    document.getElementById('dash-last-result-rows').innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <div class="rank-badge rank-1" style="width:18px;height:18px;font-size:9px;">1</div>
-          <span style="font-size:13px;font-weight:500;">${lr.rank1.name}</span>
+    if (lr.cancelled) {
+      document.getElementById('dash-last-result-rows').innerHTML = `
+        <div style="text-align:center;padding:8px 0;font-size:13px;color:#e07a35;">
+          🌧️ Cancelled<br><span style="font-size:11px;color:#666;">${lr.cancelReason || 'No result'}</span>
+        </div>`;
+    } else {
+      document.getElementById('dash-last-result-rows').innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="rank-badge rank-1" style="width:18px;height:18px;font-size:9px;">1</div>
+            <span style="font-size:13px;font-weight:500;">${lr.rank1.name}</span>
+          </div>
+          <span style="font-size:12px;font-weight:500;color:#FAC775;">+₹${lr.rank1.prize}</span>
         </div>
-        <span style="font-size:12px;font-weight:500;color:#FAC775;">+₹${lr.rank1.prize}</span>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <div class="rank-badge rank-2" style="width:18px;height:18px;font-size:9px;">2</div>
-          <span style="font-size:13px;">${lr.rank2.name}</span>
-        </div>
-        <span style="font-size:12px;color:#666;">+₹${lr.rank2.prize}</span>
-      </div>`;
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="rank-badge rank-2" style="width:18px;height:18px;font-size:9px;">2</div>
+            <span style="font-size:13px;">${lr.rank2.name}</span>
+          </div>
+          <span style="font-size:12px;color:#666;">+₹${lr.rank2.prize}</span>
+        </div>`;
+    }
   } else {
     document.getElementById('dash-last-result-match').textContent = 'No results yet';
     document.getElementById('dash-last-result-rows').innerHTML = '';
@@ -828,7 +914,7 @@ function renderDashboard() {
   document.getElementById('dash-matches-left').textContent = remaining;
   const playedPct = totalMatches ? Math.round(played/totalMatches*100) : 0;
   document.getElementById('dash-season-bar').style.width = playedPct + '%';
-  document.getElementById('dash-season-sub').textContent = played + ' of ' + totalMatches + ' matches played';
+  document.getElementById('dash-season-sub').textContent = played + ' of ' + totalMatches + ' matches' + (cancelledCount > 0 ? ' (' + cancelledCount + ' cancelled)' : '');
 
   // Row 6: win rate
   const winRateData = [...seasonStats]
@@ -940,27 +1026,31 @@ function renderMatches() {
         <div style="flex:1;">
           <div class="match-teams">${m.teams}</div>
           <div class="match-meta">${m.date} · ${m.time} · ${m.venue}</div>
-          ${feePanelHTML(idx)}
+          ${feePanelHTML(idx, 'up-')}
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-          ${feeChipHTML(idx)}
+          ${feeChipHTML(idx, 'up-')}
           <span class="badge badge-info" style="font-size:10px;">M${idx+1}</span>
         </div>
       </div>`).join('');
   }
 
   // All IPL: full schedule with played/upcoming indicator
+  const cancelledNames = new Set(savedResults.filter(r => r.cancelled).map(r => r.matchName));
   document.getElementById('all-matches-list').innerHTML = iplSchedule.map((m, idx) => {
     const played = playedNames.has(m.teams);
+    const cancelled = cancelledNames.has(m.teams);
+    const badgeClass = cancelled ? 'badge-cancelled' : played ? 'badge-success' : 'badge-info';
+    const badgeText = cancelled ? '🌧️' : played ? 'Done' : 'M'+(idx+1);
     return `<div class="match-item">
       <div style="flex:1;">
         <div class="match-teams" style="color:${played?'#555':'#e8e8e8'};">${m.teams}</div>
         <div class="match-meta">${m.date} · ${m.time} · ${m.venue}</div>
-        ${!played ? feePanelHTML(idx) : ''}
+        ${!played ? feePanelHTML(idx, 'all-') : ''}
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-        ${!played ? feeChipHTML(idx) : ''}
-        <span class="badge ${played?'badge-success':'badge-info'}" style="font-size:10px;">${played?'Done':'M'+(idx+1)}</span>
+        ${!played ? feeChipHTML(idx, 'all-') : ''}
+        <span class="badge ${badgeClass}" style="font-size:10px;">${badgeText}</span>
       </div>
     </div>`;
   }).join('');
@@ -968,6 +1058,7 @@ function renderMatches() {
 
 function renderPayments() {
   getActiveMatchIdx();
+  initLedger();
   const m = iplSchedule[activeMatchIdx];
   const payments = matchPayments[activeMatchIdx] || {};
   const paidCount = Object.values(payments).filter(v=>v===true).length;
@@ -981,8 +1072,18 @@ function renderPayments() {
       const s = payments[p.id];
       const cls = s===true?'paid':s==='debt'?'debt':'';
       const lbl = s===true?'✓ Paid':s==='debt'?'⚠ Debt':'Unpaid';
-      return `<div class="player-row">
-        <div style="display:flex;align-items:center;gap:10px;"><div class="avatar">${p.initials}</div><div style="font-size:14px;font-weight:500;">${p.name}</div></div>
+      const bal = ledger[p.id]?.balance || 0;
+      const balColor = bal > 0 ? '#4caf72' : bal < 0 ? '#e05555' : '#666';
+      const lowBal = bal >= 0 && bal < m.fee && s !== true;
+      const balLabel = bal < 0 ? '−₹'+Math.abs(bal) : '₹'+bal;
+      return `<div class="player-row" style="flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="avatar">${p.initials}</div>
+          <div>
+            <div style="font-size:14px;font-weight:500;">${p.name}</div>
+            <div style="font-size:11px;color:${balColor};margin-top:1px;">Balance: ${balLabel}${lowBal ? ' <span style="color:#e09436;">⚠ Low</span>' : ''}</div>
+          </div>
+        </div>
         <button class="pay-btn ${cls}" onclick="togglePayment(${activeMatchIdx},${p.id})">${lbl} · ₹${m.fee}</button>
       </div>`;
     }).join('');
@@ -1008,11 +1109,33 @@ function togglePayment(matchIdx, id) {
   if(!matchPayments[matchIdx]) matchPayments[matchIdx]={};
   const cur = matchPayments[matchIdx][id];
   matchPayments[matchIdx][id] = !cur?true:cur===true?'debt':false;
+  // Show balance warning when marking as paid
+  initLedger();
+  const newStatus = matchPayments[matchIdx][id];
+  const p = players.find(x => x.id === id);
+  const m = iplSchedule[matchIdx];
+  const bal = ledger[id]?.balance || 0;
+  const n = document.getElementById('pay-notif');
+  if (newStatus === true && p) {
+    if (bal < m.fee) {
+      n.textContent = '⚠️ ' + p.name + ' marked paid but balance (₹' + bal + ') is less than entry fee (₹' + m.fee + '). Top up needed!';
+      n.className = 'notification notif-info';
+      n.style.display = 'block';
+      setTimeout(()=>n.style.display='none', 4000);
+    } else {
+      n.textContent = '✓ ' + p.name + ' paid · Balance ₹' + bal + ' (covers ' + Math.floor(bal / m.fee) + ' matches)';
+      n.className = 'notification notif-success';
+      n.style.display = 'block';
+      setTimeout(()=>n.style.display='none', 2500);
+    }
+  } else {
+    n.textContent = 'Payment status updated';
+    n.className = 'notification notif-success';
+    n.style.display = 'block';
+    setTimeout(()=>n.style.display='none', 1800);
+  }
   renderPayments();
   saveState();
-  const n = document.getElementById('pay-notif');
-  n.style.display='block';
-  setTimeout(()=>n.style.display='none',1800);
 }
 
 function updateResultFeeHint() {
@@ -1020,7 +1143,7 @@ function updateResultFeeHint() {
   const m = iplSchedule[idx];
   const pool = players.length * m.fee;
   document.getElementById('result-fee-hint').textContent =
-    `Entry fee: ₹${m.fee} · Pool: ₹${pool} · 1st: ₹${Math.round(pool*0.7)} · 2nd: ₹${Math.round(pool*0.3)}`;
+    `Entry fee: ₹${m.fee} · Pool: ₹${pool} · 1st: ₹${Math.round(pool*PRIZE_SPLIT[0])} · 2nd: ₹${Math.round(pool*PRIZE_SPLIT[1])}`;
 }
 
 async function handleScreenshot(input) {
@@ -1093,14 +1216,14 @@ function buildPayoutRowHtml(rank, name, pts, prize) {
 
 function calcDefaultPrizes(pool, numWinners) {
   if (numWinners === 1) return [pool, 0, 0];
-  if (numWinners === 2) return [Math.round(pool*0.70), Math.round(pool*0.30), 0];
-  return [Math.round(pool*0.60), Math.round(pool*0.30), Math.round(pool*0.10)];
+  if (numWinners === 2) return [Math.round(pool*0.65), Math.round(pool*0.35), 0];
+  return [Math.round(pool*0.50), Math.round(pool*0.35), Math.round(pool*0.15)];
 }
 
 function defaultSplits(numWinners) {
   if (numWinners === 1) return [100, 0, 0];
-  if (numWinners === 2) return [70, 30, 0];
-  return [60, 30, 10];
+  if (numWinners === 2) return [65, 35, 0];
+  return [50, 35, 15];
 }
 
 function showPayoutPreview(rankings, file, matchFee, matchIdx) {
@@ -1372,8 +1495,10 @@ function renderWaPlayers() {
 function renderSeason() {
   // Update stat tiles
   const totalPool = savedResults.reduce((s,r)=>s+r.pool, 0);
+  const cancelledInSeason = savedResults.filter(r => r.cancelled).length;
+  const realMatchesDone = savedResults.length - cancelledInSeason;
   document.getElementById('season-total-pool').textContent = '₹' + totalPool;
-  document.getElementById('season-matches-done').textContent = savedResults.length;
+  document.getElementById('season-matches-done').innerHTML = realMatchesDone + (cancelledInSeason > 0 ? '<span style="font-size:12px;color:#e07a35;"> +' + cancelledInSeason + '🌧️</span>' : '');
 
   if(seasonStats.length === 0) {
     document.getElementById('season-list').innerHTML = '<div style="text-align:center;padding:2rem;font-size:13px;color:#666;">No results yet. Confirm match results to see the leaderboard.</div>';
@@ -1762,8 +1887,8 @@ const PRIZE_COLORS = ['#FAC775','#aaa','#888'];
 
 function defaultSplits(n) {
   if (n === 1) return [100, 0, 0];
-  if (n === 2) return [70, 30, 0];
-  return [60, 30, 10];
+  if (n === 2) return [65, 35, 0];
+  return [50, 35, 15];
 }
 
 function renderWinnerRows(mode) {
@@ -2053,6 +2178,64 @@ function confirmManualResults() {
   saveState();
 }
 
+let _cancelConfirmIdx = null;
+function cancelMatch() {
+  const idx = parseInt(document.getElementById('manual-match-select').value);
+  if (isNaN(idx) || !iplSchedule[idx]) return;
+  const m = iplSchedule[idx];
+  const playedNames = new Set(savedResults.map(r => r.matchName));
+  if (playedNames.has(m.teams)) {
+    const notif = document.getElementById('ai-notif');
+    notif.textContent = '⚠️ This match already has a result recorded.';
+    notif.className = 'notification notif-info';
+    notif.style.display = 'block';
+    setTimeout(()=>notif.style.display='none', 2500);
+    return;
+  }
+  // Two-step: first click shows confirm, second click executes
+  const btn = document.getElementById('cancel-match-btn');
+  if (_cancelConfirmIdx === idx) {
+    // Confirmed — record the cancellation
+    savedResults.unshift({
+      matchName: m.teams, date: m.date, numWinners: 0,
+      rank1: { name:'\u2014', pts:0, prize:0 },
+      rank2: { name:'', pts:0, prize:0 },
+      rank3: { name:'', pts:0, prize:0 },
+      pool: 0, savedAt: todayStr(),
+      absentIds: [], participantCount: 0,
+      cancelled: true, cancelReason: 'Rain / No result'
+    });
+    const notif = document.getElementById('ai-notif');
+    notif.textContent = '\uD83C\uDF27\uFE0F ' + m.teams + ' recorded as cancelled. No balances affected.';
+    notif.className = 'notification notif-success';
+    notif.style.display = 'block';
+    setTimeout(()=>notif.style.display='none', 3000);
+    renderSeason();
+    refreshLedger();
+    populateResultMatchDropdowns();
+    saveState();
+    _cancelConfirmIdx = null;
+    if (btn) {
+      btn.textContent = '\uD83C\uDF27\uFE0F Cancel match (rain / no result)';
+      btn.style.background = 'transparent';
+    }
+  } else {
+    // First click — ask to confirm
+    _cancelConfirmIdx = idx;
+    if (btn) {
+      btn.textContent = '\u26A0\uFE0F Tap again to confirm cancellation of ' + m.teams;
+      btn.style.background = '#2e1f05';
+    }
+    setTimeout(() => {
+      _cancelConfirmIdx = null;
+      if (btn) {
+        btn.textContent = '\uD83C\uDF27\uFE0F Cancel match (rain / no result)';
+        btn.style.background = 'transparent';
+      }
+    }, 4000);
+  }
+}
+
 function copyManualMsg() {
   if(!window._manualDraft) return;
   navigator.clipboard.writeText(window._manualDraft.waMsg).then(()=>alert('Message copied!'));
@@ -2077,6 +2260,25 @@ function renderPastResults() {
   if(savedResults.length===0){ container.innerHTML=''; empty.style.display='block'; return; }
   empty.style.display='none';
   container.innerHTML = savedResults.map((r,i)=>{
+    // Cancelled match
+    if (r.cancelled) {
+      return `
+      <div class="result-card" style="border-color:#5a2a10;">
+        <div class="result-card-header">
+          <div>
+            <div style="font-weight:500;font-size:14px;">${r.matchName}</div>
+            <div style="font-size:12px;color:#666;">${r.date} · Saved ${r.savedAt}</div>
+          </div>
+          <div class="result-actions">
+            <span class="badge badge-cancelled" style="margin-right:6px;">🌧️ Cancelled</span>
+            <button class="btn-icon danger" data-delete-idx="${i}" onclick="deleteResult(${i}, false)">🗑 Delete</button>
+          </div>
+        </div>
+        <div style="text-align:center;padding:1rem;font-size:13px;color:#e07a35;">
+          ${r.cancelReason || 'Match cancelled'} — no entry fees deducted, no prizes awarded
+        </div>
+      </div>`;
+    }
     const absentNames = (r.absentIds||[]).map(id => players.find(p=>p.id===id)?.name).filter(Boolean);
     const absentBadge = absentNames.length > 0
       ? `<span style="font-size:11px;color:#e07a35;margin-left:4px;">· 🚫 ${absentNames.join(', ')} absent</span>`
@@ -2199,6 +2401,15 @@ function deleteResult(idx, confirmed) {
     return;
   }
   const r = savedResults[idx];
+  // Cancelled matches have no ledger entries to reverse
+  if (r.cancelled) {
+    savedResults.splice(idx, 1);
+    renderPastResults();
+    renderSeason();
+    refreshLedger();
+    saveState();
+    return;
+  }
   const w = seasonStats.find(p=>p.name===r.rank1.name);
   const s = seasonStats.find(p=>p.name===r.rank2.name);
   if(w){ w.wins = Math.max(0,w.wins-1); w.earned = Math.max(0,w.earned-r.rank1.prize); }
