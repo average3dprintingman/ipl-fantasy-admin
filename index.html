@@ -650,89 +650,110 @@ let matchPayments = {};
 let aiResults = null;
 let activeMatchIdx = 0;
 
-// Derive next unplayed match index from savedResults
-// savedResults stores matchName; we match against iplSchedule
+// Build a Set of played schedule *indices*, correctly handling double round-robin
+// (same two teams play each other twice - matched by sorted team pair + occurrence count)
+function getPlayedIndices() {
+  const pairCount = {};
+  const playedIdxSet = new Set();
+  // Walk savedResults oldest-first (it's stored newest-first, so reverse)
+  for (let i = savedResults.length - 1; i >= 0; i--) {
+    const name = savedResults[i].matchName;
+    const key = name.split(' vs ').slice().sort().join('|');
+    const occurrence = pairCount[key] || 0;
+    // Find the (occurrence)-th schedule entry with this normalised pair
+    let found = 0;
+    for (let j = 0; j < iplSchedule.length; j++) {
+      const sk = iplSchedule[j].teams.split(' vs ').slice().sort().join('|');
+      if (sk === key) {
+        if (found === occurrence) { playedIdxSet.add(j); break; }
+        found++;
+      }
+    }
+    pairCount[key] = occurrence + 1;
+  }
+  return playedIdxSet;
+}
+
 function getActiveMatchIdx() {
-  const playedNames = new Set(savedResults.map(r => r.matchName));
-  const idx = iplSchedule.findIndex(m => !playedNames.has(m.teams));
+  const playedIdxSet = getPlayedIndices();
+  const idx = iplSchedule.findIndex((m, i) => !playedIdxSet.has(i));
   activeMatchIdx = idx >= 0 ? idx : iplSchedule.length - 1;
   return activeMatchIdx;
 }
 let savedResults = [];
 
 let iplSchedule = [
-  { date:'Mar 28', teams:'RCB vs SRH', time:'7:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
-  { date:'Mar 29', teams:'MI vs KKR', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
-  { date:'Mar 30', teams:'RR vs CSK', time:'7:30 PM', venue:'ACA Stadium, Guwahati', fee:100 },
-  { date:'Mar 31', teams:'PBKS vs GT', time:'7:30 PM', venue:'New PCA Stadium, Mullanpur', fee:100 },
-  { date:'Apr 1', teams:'LSG vs DC', time:'7:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
-  { date:'Apr 2', teams:'KKR vs SRH', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
-  { date:'Apr 3', teams:'CSK vs PBKS', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
-  { date:'Apr 4', teams:'DC vs MI', time:'3:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
-  { date:'Apr 4', teams:'GT vs RR', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
-  { date:'Apr 5', teams:'SRH vs LSG', time:'3:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
-  { date:'Apr 5', teams:'RCB vs CSK', time:'7:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
-  { date:'Apr 6', teams:'KKR vs PBKS', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
-  { date:'Apr 7', teams:'RR vs MI', time:'7:30 PM', venue:'ACA Stadium, Guwahati', fee:100 },
-  { date:'Apr 8', teams:'DC vs GT', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
-  { date:'Apr 9', teams:'KKR vs LSG', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
-  { date:'Apr 10', teams:'RR vs RCB', time:'7:30 PM', venue:'ACA Stadium, Guwahati', fee:100 },
-  { date:'Apr 11', teams:'PBKS vs SRH', time:'3:30 PM', venue:'New PCA Stadium, Mullanpur', fee:100 },
-  { date:'Apr 11', teams:'CSK vs DC', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
-  { date:'Apr 12', teams:'LSG vs GT', time:'3:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
-  { date:'Apr 12', teams:'MI vs RCB', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
-  { date:'Apr 13', teams:'SRH vs RR', time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
-  { date:'Apr 14', teams:'CSK vs KKR', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
-  { date:'Apr 15', teams:'RCB vs LSG', time:'7:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
-  { date:'Apr 16', teams:'MI vs PBKS', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
-  { date:'Apr 17', teams:'GT vs KKR', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
-  { date:'Apr 18', teams:'RCB vs DC', time:'3:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
-  { date:'Apr 18', teams:'SRH vs CSK', time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
-  { date:'Apr 19', teams:'KKR vs RR', time:'3:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
-  { date:'Apr 19', teams:'PBKS vs LSG', time:'7:30 PM', venue:'New PCA Stadium, Mullanpur', fee:100 },
-  { date:'Apr 20', teams:'GT vs MI', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
-  { date:'Apr 21', teams:'SRH vs DC', time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
-  { date:'Apr 22', teams:'LSG vs RR', time:'7:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
-  { date:'Apr 23', teams:'MI vs CSK', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
-  { date:'Apr 24', teams:'RCB vs GT', time:'7:30 PM', venue:'Chinnaswamy, Bengaluru', fee:100 },
-  { date:'Apr 25', teams:'DC vs PBKS', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
-  { date:'Apr 26', teams:'RR vs SRH', time:'3:30 PM', venue:'Sawai Mansingh Stadium, Jaipur', fee:100 },
-  { date:'Apr 26', teams:'GT vs CSK', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
-  { date:'Apr 27', teams:'LSG vs KKR', time:'3:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
-  { date:'Apr 27', teams:'DC vs RCB', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
-  { date:'Apr 28', teams:'PBKS vs RR', time:'7:30 PM', venue:'HPCA Stadium, Dharamsala', fee:100 },
-  { date:'Apr 29', teams:'MI vs SRH', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
-  { date:'Apr 30', teams:'GT vs RCB', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
-  { date:'May 1', teams:'RR vs DC', time:'7:30 PM', venue:'Sawai Mansingh Stadium, Jaipur', fee:100 },
-  { date:'May 2', teams:'CSK vs MI', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
-  { date:'May 3', teams:'PBKS vs KKR', time:'3:30 PM', venue:'HPCA Stadium, Dharamsala', fee:100 },
-  { date:'May 3', teams:'LSG vs SRH', time:'7:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
-  { date:'May 4', teams:'RCB vs RR', time:'3:30 PM', venue:'Nava Raipur Stadium, Raipur', fee:100 },
-  { date:'May 4', teams:'DC vs CSK', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
-  { date:'May 5', teams:'KKR vs GT', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
-  { date:'May 6', teams:'PBKS vs MI', time:'7:30 PM', venue:'HPCA Stadium, Dharamsala', fee:100 },
-  { date:'May 7', teams:'SRH vs RR', time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
-  { date:'May 8', teams:'DC vs GT', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
-  { date:'May 9', teams:'RR vs LSG', time:'7:30 PM', venue:'Sawai Mansingh Stadium, Jaipur', fee:100 },
-  { date:'May 10', teams:'CSK vs MI', time:'3:30 PM', venue:'Chepauk, Chennai', fee:100 },
-  { date:'May 10', teams:'RCB vs DC', time:'7:30 PM', venue:'Nava Raipur Stadium, Raipur', fee:100 },
-  { date:'May 11', teams:'PBKS vs SRH', time:'7:30 PM', venue:'HPCA Stadium, Dharamsala', fee:100 },
-  { date:'May 12', teams:'GT vs KKR', time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad', fee:100 },
-  { date:'May 13', teams:'RCB vs MI', time:'7:30 PM', venue:'Nava Raipur Stadium, Raipur', fee:100 },
-  { date:'May 14', teams:'PBKS vs MI', time:'7:30 PM', venue:'HPCA Stadium, Dharamsala', fee:100 },
-  { date:'May 15', teams:'LSG vs CSK', time:'7:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
-  { date:'May 16', teams:'KKR vs GT', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
-  { date:'May 17', teams:'PBKS vs RCB', time:'3:30 PM', venue:'HPCA Stadium, Dharamsala', fee:100 },
-  { date:'May 17', teams:'DC vs RR', time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
-  { date:'May 18', teams:'CSK vs SRH', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
-  { date:'May 19', teams:'RR vs LSG', time:'7:30 PM', venue:'Sawai Mansingh Stadium, Jaipur', fee:100 },
-  { date:'May 20', teams:'KKR vs MI', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
-  { date:'May 21', teams:'CSK vs GT', time:'7:30 PM', venue:'Chepauk, Chennai', fee:100 },
-  { date:'May 22', teams:'SRH vs RCB', time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad', fee:100 },
-  { date:'May 23', teams:'LSG vs PBKS', time:'3:30 PM', venue:'Ekana Stadium, Lucknow', fee:100 },
-  { date:'May 23', teams:'MI vs RR', time:'7:30 PM', venue:'Wankhede, Mumbai', fee:100 },
-  { date:'May 24', teams:'DC vs SRH', time:'3:30 PM', venue:'Arun Jaitley Stadium, Delhi', fee:100 },
-  { date:'May 24', teams:'KKR vs CSK', time:'7:30 PM', venue:'Eden Gardens, Kolkata', fee:100 },
+  // Source: Official TATA IPL 2026 Schedule — verified via iplt20.com, ESPNcricinfo, team sites
+  { date:'Mar 28', teams:'SRH vs RCB',  time:'7:30 PM', venue:'Chinnaswamy, Bengaluru',              fee:200 },
+  { date:'Mar 29', teams:'KKR vs MI',   time:'7:30 PM', venue:'Wankhede, Mumbai',                    fee:100 },
+  { date:'Mar 30', teams:'CSK vs RR',   time:'7:30 PM', venue:'ACA Stadium, Guwahati',               fee:100 },
+  { date:'Mar 31', teams:'GT vs PBKS',  time:'7:30 PM', venue:'New PCA Stadium, Mullanpur',          fee:100 },
+  { date:'Apr 1',  teams:'LSG vs DC',   time:'7:30 PM', venue:'Ekana Stadium, Lucknow',              fee:100 },
+  { date:'Apr 2',  teams:'KKR vs SRH',  time:'7:30 PM', venue:'Eden Gardens, Kolkata',               fee:100 },
+  { date:'Apr 3',  teams:'CSK vs PBKS', time:'7:30 PM', venue:'Chepauk, Chennai',                    fee:100 },
+  { date:'Apr 4',  teams:'DC vs MI',    time:'3:30 PM', venue:'Arun Jaitley Stadium, Delhi',         fee:100 },
+  { date:'Apr 4',  teams:'RR vs GT',    time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad',    fee:100 },
+  { date:'Apr 5',  teams:'SRH vs LSG',  time:'3:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad',     fee:100 },
+  { date:'Apr 5',  teams:'RCB vs CSK',  time:'7:30 PM', venue:'Chinnaswamy, Bengaluru',              fee:200 },
+  { date:'Apr 6',  teams:'KKR vs PBKS', time:'7:30 PM', venue:'Eden Gardens, Kolkata',               fee:100 },
+  { date:'Apr 7',  teams:'RR vs MI',    time:'7:30 PM', venue:'ACA Stadium, Guwahati',               fee:100 },
+  { date:'Apr 8',  teams:'GT vs DC',    time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi',         fee:100 },
+  { date:'Apr 9',  teams:'KKR vs LSG',  time:'7:30 PM', venue:'Eden Gardens, Kolkata',               fee:100 },
+  { date:'Apr 10', teams:'RCB vs RR',   time:'7:30 PM', venue:'ACA Stadium, Guwahati',               fee:200 },
+  { date:'Apr 11', teams:'SRH vs PBKS', time:'3:30 PM', venue:'New PCA Stadium, Mullanpur',          fee:100 },
+  { date:'Apr 11', teams:'CSK vs DC',   time:'7:30 PM', venue:'Chepauk, Chennai',                    fee:100 },
+  { date:'Apr 12', teams:'LSG vs GT',   time:'3:30 PM', venue:'Ekana Stadium, Lucknow',              fee:100 },
+  { date:'Apr 12', teams:'RCB vs MI',   time:'7:30 PM', venue:'Wankhede, Mumbai',                    fee:200 },
+  { date:'Apr 13', teams:'SRH vs RR',   time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad',     fee:100 },
+  { date:'Apr 14', teams:'CSK vs KKR',  time:'7:30 PM', venue:'Chepauk, Chennai',                    fee:100 },
+  { date:'Apr 15', teams:'LSG vs RCB',  time:'7:30 PM', venue:'Chinnaswamy, Bengaluru',              fee:200 },
+  { date:'Apr 16', teams:'MI vs PBKS',  time:'7:30 PM', venue:'Wankhede, Mumbai',                    fee:100 },
+  { date:'Apr 17', teams:'KKR vs GT',   time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad',    fee:100 },
+  { date:'Apr 18', teams:'RCB vs DC',   time:'3:30 PM', venue:'Chinnaswamy, Bengaluru',              fee:200 },
+  { date:'Apr 18', teams:'SRH vs CSK',  time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad',     fee:100 },
+  { date:'Apr 19', teams:'RR vs KKR',   time:'3:30 PM', venue:'Eden Gardens, Kolkata',               fee:100 },
+  { date:'Apr 19', teams:'PBKS vs LSG', time:'7:30 PM', venue:'New PCA Stadium, Mullanpur',          fee:100 },
+  { date:'Apr 20', teams:'MI vs GT',    time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad',    fee:100 },
+  { date:'Apr 21', teams:'SRH vs DC',   time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad',     fee:100 },
+  { date:'Apr 22', teams:'RR vs LSG',   time:'7:30 PM', venue:'Ekana Stadium, Lucknow',              fee:100 },
+  { date:'Apr 23', teams:'CSK vs MI',   time:'7:30 PM', venue:'Wankhede, Mumbai',                    fee:100 },
+  { date:'Apr 24', teams:'GT vs RCB',   time:'7:30 PM', venue:'Chinnaswamy, Bengaluru',              fee:200 },
+  { date:'Apr 25', teams:'DC vs PBKS',  time:'3:30 PM', venue:'Arun Jaitley Stadium, Delhi',         fee:100 },
+  { date:'Apr 25', teams:'RR vs SRH',   time:'7:30 PM', venue:'Sawai Mansingh Stadium, Jaipur',      fee:100 },
+  { date:'Apr 26', teams:'CSK vs GT',   time:'3:30 PM', venue:'Narendra Modi Stadium, Ahmedabad',    fee:100 },
+  { date:'Apr 26', teams:'KKR vs LSG',  time:'7:30 PM', venue:'Ekana Stadium, Lucknow',              fee:100 },
+  { date:'Apr 27', teams:'DC vs RCB',   time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi',         fee:200 },
+  { date:'Apr 28', teams:'PBKS vs RR',  time:'7:30 PM', venue:'New PCA Stadium, Mullanpur',          fee:100 },
+  { date:'Apr 29', teams:'MI vs SRH',   time:'7:30 PM', venue:'Wankhede, Mumbai',                    fee:100 },
+  { date:'Apr 30', teams:'RCB vs GT',   time:'7:30 PM', venue:'Chinnaswamy, Bengaluru',              fee:200 },
+  { date:'May 1',  teams:'RR vs DC',    time:'7:30 PM', venue:'Sawai Mansingh Stadium, Jaipur',      fee:100 },
+  { date:'May 2',  teams:'CSK vs MI',   time:'7:30 PM', venue:'Chepauk, Chennai',                    fee:100 },
+  { date:'May 3',  teams:'SRH vs KKR',  time:'3:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad',     fee:100 },
+  { date:'May 3',  teams:'GT vs PBKS',  time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad',    fee:100 },
+  { date:'May 4',  teams:'MI vs LSG',   time:'7:30 PM', venue:'Wankhede, Mumbai',                    fee:100 },
+  { date:'May 5',  teams:'DC vs CSK',   time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi',         fee:100 },
+  { date:'May 6',  teams:'SRH vs PBKS', time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad',     fee:100 },
+  { date:'May 7',  teams:'LSG vs RCB',  time:'7:30 PM', venue:'Ekana Stadium, Lucknow',              fee:100 },
+  { date:'May 8',  teams:'DC vs KKR',   time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi',         fee:100 },
+  { date:'May 9',  teams:'RR vs GT',    time:'7:30 PM', venue:'Sawai Mansingh Stadium, Jaipur',      fee:100 },
+  { date:'May 10', teams:'CSK vs LSG',  time:'3:30 PM', venue:'Chepauk, Chennai',                    fee:100 },
+  { date:'May 10', teams:'RCB vs MI',   time:'7:30 PM', venue:'Nava Raipur Stadium, Raipur',         fee:100 },
+  { date:'May 11', teams:'PBKS vs DC',  time:'7:30 PM', venue:'HPCA Stadium, Dharamsala',            fee:100 },
+  { date:'May 12', teams:'GT vs SRH',   time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad',    fee:100 },
+  { date:'May 13', teams:'RCB vs KKR',  time:'7:30 PM', venue:'Nava Raipur Stadium, Raipur',         fee:100 },
+  { date:'May 14', teams:'PBKS vs MI',  time:'7:30 PM', venue:'HPCA Stadium, Dharamsala',            fee:100 },
+  { date:'May 15', teams:'LSG vs CSK',  time:'7:30 PM', venue:'Ekana Stadium, Lucknow',              fee:100 },
+  { date:'May 16', teams:'KKR vs GT',   time:'7:30 PM', venue:'Eden Gardens, Kolkata',               fee:100 },
+  { date:'May 17', teams:'PBKS vs RCB', time:'3:30 PM', venue:'HPCA Stadium, Dharamsala',            fee:100 },
+  { date:'May 17', teams:'DC vs RR',    time:'7:30 PM', venue:'Arun Jaitley Stadium, Delhi',         fee:100 },
+  { date:'May 18', teams:'CSK vs SRH',  time:'7:30 PM', venue:'Chepauk, Chennai',                    fee:100 },
+  { date:'May 19', teams:'RR vs LSG',   time:'7:30 PM', venue:'Sawai Mansingh Stadium, Jaipur',      fee:100 },
+  { date:'May 20', teams:'KKR vs MI',   time:'7:30 PM', venue:'Eden Gardens, Kolkata',               fee:100 },
+  { date:'May 21', teams:'GT vs CSK',   time:'7:30 PM', venue:'Narendra Modi Stadium, Ahmedabad',    fee:100 },
+  { date:'May 22', teams:'SRH vs RCB',  time:'7:30 PM', venue:'Rajiv Gandhi Stadium, Hyderabad',     fee:100 },
+  { date:'May 23', teams:'LSG vs PBKS', time:'3:30 PM', venue:'Ekana Stadium, Lucknow',              fee:100 },
+  { date:'May 24', teams:'MI vs RR',    time:'3:30 PM', venue:'Wankhede, Mumbai',                    fee:100 },
+  { date:'May 24', teams:'KKR vs DC',   time:'7:30 PM', venue:'Eden Gardens, Kolkata',               fee:100 },
 ];
 
 let seasonStats = [];
@@ -1012,13 +1033,14 @@ function renderDashUpcoming() {
 }
 
 function renderMatches() {
-  getActiveMatchIdx();
-  const playedNames = new Set(savedResults.map(r => r.matchName));
+  const playedIdxSet = getPlayedIndices();
+  activeMatchIdx = iplSchedule.findIndex((m, i) => !playedIdxSet.has(i));
+  if (activeMatchIdx < 0) activeMatchIdx = iplSchedule.length - 1;
 
   // Upcoming: only unplayed matches, up to 6
   const upcomingMatches = iplSchedule
     .map((m, idx) => ({ m, idx }))
-    .filter(({ m }) => !playedNames.has(m.teams))
+    .filter(({ idx }) => !playedIdxSet.has(idx))
     .slice(0, 6);
 
   if (upcomingMatches.length === 0) {
@@ -1039,10 +1061,19 @@ function renderMatches() {
   }
 
   // All IPL: full schedule with played/upcoming indicator
-  const cancelledNames = new Set(savedResults.filter(r => r.cancelled).map(r => r.matchName));
+  const cancelledIdxSet = new Set();
+  savedResults.forEach((r, si) => {
+    if (!r.cancelled) return;
+    const key = r.matchName.split(' vs ').slice().sort().join('|');
+    let occ = 0;
+    for (let j = 0; j < iplSchedule.length; j++) {
+      const sk = iplSchedule[j].teams.split(' vs ').slice().sort().join('|');
+      if (sk === key) { cancelledIdxSet.add(j); break; }
+    }
+  });
   document.getElementById('all-matches-list').innerHTML = iplSchedule.map((m, idx) => {
-    const played = playedNames.has(m.teams);
-    const cancelled = cancelledNames.has(m.teams);
+    const played = playedIdxSet.has(idx);
+    const cancelled = cancelledIdxSet.has(idx);
     const badgeClass = cancelled ? 'badge-cancelled' : played ? 'badge-success' : 'badge-info';
     const badgeText = cancelled ? '🌧️' : played ? 'Done' : 'M'+(idx+1);
     return `<div class="match-item">
@@ -1616,7 +1647,54 @@ function initLedger() {
 const SAVE_KEY = 'ipl_fantasy_2026';
 let _saveTimer = null;
 
+// Rename map for match names that changed when the schedule was corrected.
+// Keys are stale names stored in old savedResults/ledger data; values are the
+// canonical names used in the current iplSchedule.
+const MATCH_NAME_MIGRATIONS = {
+  'RCB vs SRH': 'SRH vs RCB',
+  'MI vs KKR':  'KKR vs MI',
+  'RR vs CSK':  'CSK vs RR',
+  'PBKS vs GT': 'GT vs PBKS',
+  'CSK vs MI':  'CSK vs MI',
+  'PBKS vs RR': 'PBKS vs RR',
+  'DC vs GT':   'GT vs DC',
+  'MI vs RCB':  'RCB vs MI',
+  'KKR vs RR':  'RR vs KKR',
+  'LSG vs KKR': 'KKR vs LSG',
+  'GT vs KKR':  'KKR vs GT',
+  'MI vs CSK':  'CSK vs MI',
+  'RCB vs LSG': 'LSG vs RCB',
+  'RR vs RCB':  'RCB vs RR',
+  'LSG vs RR':  'RR vs LSG',
+  'GT vs RR':   'RR vs GT',
+  'PBKS vs SRH':'SRH vs PBKS',
+  'GT vs MI':   'MI vs GT',
+};
+
+function migrateMatchNames(state) {
+  const scheduleNames = new Set(iplSchedule.map(m => m.teams));
+  if (state.savedResults) {
+    state.savedResults.forEach(r => {
+      if (!scheduleNames.has(r.matchName) && MATCH_NAME_MIGRATIONS[r.matchName]) {
+        r.matchName = MATCH_NAME_MIGRATIONS[r.matchName];
+      }
+    });
+  }
+  if (state.ledger) {
+    Object.values(state.ledger).forEach(pl => {
+      (pl.transactions || []).forEach(txn => {
+        if (txn.note) {
+          Object.entries(MATCH_NAME_MIGRATIONS).forEach(([old, nw]) => {
+            if (txn.note.includes(old)) txn.note = txn.note.replace(old, nw);
+          });
+        }
+      });
+    });
+  }
+}
+
 function applyState(state) {
+  migrateMatchNames(state);
   if (state.players)        players       = state.players;
   if (state.matchPayments)  matchPayments = state.matchPayments;
   if (state.savedResults)   savedResults  = state.savedResults;
@@ -2055,10 +2133,11 @@ function switchEntryMode(mode, btn) {
 }
 
 function populateResultMatchDropdowns() {
-  getActiveMatchIdx();
-  const playedNames = new Set(savedResults.map(r => r.matchName));
+  const playedIdxSet = getPlayedIndices();
+  activeMatchIdx = iplSchedule.findIndex((m, i) => !playedIdxSet.has(i));
+  if (activeMatchIdx < 0) activeMatchIdx = iplSchedule.length - 1;
   const opts = iplSchedule.map((m, i) => {
-    const played = playedNames.has(m.teams);
+    const played = playedIdxSet.has(i);
     return `<option value="${i}" ${played?'disabled style="color:#444;"':''}>${played?'✓ ':''} ${m.teams} — ${m.date} ${m.time}</option>`;
   }).join('');
   const ai = document.getElementById('result-match-select');
@@ -2186,8 +2265,8 @@ function cancelMatch() {
   const idx = parseInt(document.getElementById('manual-match-select').value);
   if (isNaN(idx) || !iplSchedule[idx]) return;
   const m = iplSchedule[idx];
-  const playedNames = new Set(savedResults.map(r => r.matchName));
-  if (playedNames.has(m.teams)) {
+  const playedIdxSet = getPlayedIndices();
+  if (playedIdxSet.has(idx)) {
     const notif = document.getElementById('ai-notif');
     notif.textContent = '⚠️ This match already has a result recorded.';
     notif.className = 'notification notif-info';
